@@ -6,764 +6,595 @@
 <title>Distinta Dinamica CMV</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-  :root {
-    --blue: #1F3864;
-    --blue-light: #2E75B6;
-    --blue-bg: #DEEAF1;
-    --orange: #C55A11;
-    --green: #006100;
-    --green-bg: #C6EFCE;
-    --red: #9C0006;
-    --red-bg: #FFC7CE;
-    --gray: #f8f9fa;
-    --shadow: 0 2px 8px rgba(0,0,0,0.1);
-  }
+:root {
+  --blue:#1F3864; --blue2:#2E75B6; --blue-bg:#DEEAF1;
+  --orange:#C55A11; --green:#006100; --green-bg:#C6EFCE;
+  --red:#9C0006; --red-bg:#FFC7CE; --gray:#f5f6fa;
+  --shadow:0 2px 10px rgba(0,0,0,.1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--gray);color:#333}
+header{background:var(--blue);color:#fff;padding:18px 30px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)}
+header h1{font-size:20px;font-weight:700}
+header p{font-size:12px;opacity:.75;margin-top:2px}
+.container{max-width:1000px;margin:24px auto;padding:0 16px}
+.card{background:#fff;border-radius:10px;box-shadow:var(--shadow);margin-bottom:18px;overflow:hidden}
+.card-head{background:var(--blue2);color:#fff;padding:11px 18px;font-weight:600;font-size:13px;display:flex;align-items:center;gap:8px}
+.card-head .n{background:#fff;color:var(--blue2);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.card-body{padding:18px}
+.row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.row label{font-size:12px;font-weight:600;color:var(--blue);min-width:130px}
+.row input{flex:1;padding:7px 11px;border:2px solid #ddd;border-radius:6px;font-size:13px;font-family:monospace}
+.row input:focus{outline:none;border-color:var(--blue2)}
+.hint{font-size:11px;color:#888;margin-top:6px;line-height:1.5}
+.hint code{background:#f0f0f0;padding:1px 5px;border-radius:3px;font-size:11px}
+.btn{padding:7px 18px;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-primary{background:var(--blue2);color:#fff}.btn-primary:hover{background:var(--blue)}
+.btn-primary:disabled{background:#aaa;cursor:not-allowed}
+.btn-success{background:#28a745;color:#fff}.btn-success:hover{background:#218838}
+.btn-orange{background:var(--orange);color:#fff;padding:9px 24px;font-size:14px}
+.btn-orange:hover{background:#a84a0e}.btn-orange:disabled{background:#aaa;cursor:not-allowed}
+.btn-sm{padding:5px 11px;font-size:12px}
+.drop-zone{border:3px dashed #ccc;border-radius:10px;padding:36px;text-align:center;cursor:pointer;transition:all .3s;background:var(--gray)}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--blue2);background:var(--blue-bg)}
+.drop-zone .ico{font-size:36px;margin-bottom:8px}
+.drop-zone .txt{font-size:13px;color:#555}
+.drop-zone .sub{font-size:11px;color:#999;margin-top:4px}
+.file-chip{display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--blue-bg);border-radius:7px;margin-top:10px}
+.file-chip .nm{font-weight:600;font-size:13px}
+.file-chip .sz{font-size:11px;color:#666}
+#log{background:#1e1e1e;color:#ccc;font-family:Consolas,monospace;font-size:12px;padding:13px;border-radius:6px;max-height:220px;overflow-y:auto;line-height:1.7}
+#log .ok{color:#4ec9b0}#log .warn{color:#dcdcaa}#log .err{color:#f14c4c}#log .info{color:#569cd6}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.stat{text-align:center;padding:12px;border-radius:8px;background:var(--gray)}
+.stat .v{font-size:26px;font-weight:700;color:var(--blue)}
+.stat .l{font-size:11px;color:#666;margin-top:2px}
+.stat.g .v{color:var(--green)}.stat.r .v{color:var(--red)}
+.status{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:6px;font-size:13px;margin-top:8px}
+.status.ok{background:var(--green-bg);color:var(--green)}.status.err{background:var(--red-bg);color:var(--red)}
+.status.loading{background:#fff3cd;color:#856404}
+.hidden{display:none}
+.flex-gap{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    background: var(--gray);
-    color: #333;
-    min-height: 100vh;
-  }
-
-  header {
-    background: var(--blue);
-    color: white;
-    padding: 20px 30px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    box-shadow: var(--shadow);
-  }
-
-  header h1 { font-size: 22px; font-weight: 600; }
-  header .subtitle { font-size: 13px; opacity: 0.8; }
-
-  .container {
-    max-width: 900px;
-    margin: 30px auto;
-    padding: 0 20px;
-  }
-
-  .card {
-    background: white;
-    border-radius: 10px;
-    box-shadow: var(--shadow);
-    margin-bottom: 20px;
-    overflow: hidden;
-  }
-
-  .card-header {
-    background: var(--blue-light);
-    color: white;
-    padding: 12px 20px;
-    font-weight: 600;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .card-body { padding: 20px; }
-
-  .step-number {
-    background: white;
-    color: var(--blue-light);
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    font-weight: 700;
-    flex-shrink: 0;
-  }
-
-  .config-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-
-  .config-row label {
-    font-size: 13px;
-    font-weight: 600;
-    min-width: 140px;
-    color: var(--blue);
-  }
-
-  .config-row input {
-    flex: 1;
-    padding: 8px 12px;
-    border: 2px solid #ddd;
-    border-radius: 6px;
-    font-size: 13px;
-    transition: border-color 0.2s;
-  }
-
-  .config-row input:focus {
-    outline: none;
-    border-color: var(--blue-light);
-  }
-
-  .btn {
-    padding: 8px 20px;
-    border: none;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .btn-primary {
-    background: var(--blue-light);
-    color: white;
-  }
-  .btn-primary:hover { background: var(--blue); }
-  .btn-primary:disabled { background: #aaa; cursor: not-allowed; }
-
-  .btn-success {
-    background: #28a745;
-    color: white;
-  }
-  .btn-success:hover { background: #218838; }
-
-  .btn-orange {
-    background: var(--orange);
-    color: white;
-  }
-  .btn-orange:hover { background: #a84a0e; }
-
-  .btn-sm {
-    padding: 5px 12px;
-    font-size: 12px;
-  }
-
-  .drop-zone {
-    border: 3px dashed #ccc;
-    border-radius: 10px;
-    padding: 40px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s;
-    background: var(--gray);
-  }
-
-  .drop-zone:hover, .drop-zone.dragover {
-    border-color: var(--blue-light);
-    background: var(--blue-bg);
-  }
-
-  .drop-zone .icon { font-size: 40px; margin-bottom: 10px; }
-  .drop-zone .text { font-size: 14px; color: #666; }
-  .drop-zone .hint { font-size: 12px; color: #999; margin-top: 5px; }
-
-  .file-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 15px;
-    background: var(--blue-bg);
-    border-radius: 6px;
-    margin-top: 10px;
-  }
-
-  .file-info .name { font-weight: 600; font-size: 13px; }
-  .file-info .size { font-size: 12px; color: #666; }
-
-  #log {
-    background: #1e1e1e;
-    color: #d4d4d4;
-    font-family: 'Cascadia Code', 'Consolas', monospace;
-    font-size: 12px;
-    padding: 15px;
-    border-radius: 6px;
-    max-height: 300px;
-    overflow-y: auto;
-    line-height: 1.6;
-  }
-
-  #log .ok { color: #4ec9b0; }
-  #log .warn { color: #dcdcaa; }
-  #log .err { color: #f14c4c; }
-  #log .info { color: #569cd6; }
-
-  .results {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin: 15px 0;
-  }
-
-  .stat {
-    text-align: center;
-    padding: 12px;
-    border-radius: 8px;
-    background: var(--gray);
-  }
-
-  .stat .value {
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--blue);
-  }
-
-  .stat .label {
-    font-size: 11px;
-    color: #666;
-    margin-top: 3px;
-  }
-
-  .stat.green .value { color: var(--green); }
-  .stat.red .value { color: var(--red); }
-
-  .hidden { display: none; }
-
-  .tag {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 600;
-  }
-
-  .tag-green { background: var(--green-bg); color: var(--green); }
-  .tag-red { background: var(--red-bg); color: var(--red); }
-
-  .help-text {
-    font-size: 12px;
-    color: #888;
-    margin-top: 8px;
-    line-height: 1.5;
-  }
-
-  .btn-group { display: flex; gap: 8px; margin-top: 12px; }
-
-  .status-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 15px;
-    border-radius: 6px;
-    font-size: 13px;
-    margin-bottom: 12px;
-  }
-
-  .status-bar.connected {
-    background: var(--green-bg);
-    color: var(--green);
-  }
-
-  .status-bar.disconnected {
-    background: var(--red-bg);
-    color: var(--red);
-  }
+/* TABLE */
+.tbl-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.tbl-toolbar input{padding:7px 12px;border:2px solid #ddd;border-radius:6px;font-size:13px;min-width:220px}
+.tbl-toolbar input:focus{outline:none;border-color:var(--blue2)}
+.tbl-toolbar select{padding:7px 12px;border:2px solid #ddd;border-radius:6px;font-size:13px;background:#fff}
+.tbl-toolbar select:focus{outline:none;border-color:var(--blue2)}
+.tbl-wrap{overflow-x:auto;border-radius:8px;border:1px solid #e0e0e0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--blue);color:#fff;padding:9px 12px;text-align:left;font-size:12px;font-weight:600;white-space:nowrap;position:sticky;top:0;cursor:pointer;user-select:none}
+thead th:hover{background:var(--blue2)}
+thead th.sort-asc::after{content:' ▲'}
+thead th.sort-desc::after{content:' ▼'}
+tbody tr:nth-child(even){background:#f8f9ff}
+tbody tr:hover{background:var(--blue-bg)}
+tbody td{padding:7px 12px;border-bottom:1px solid #eee;white-space:nowrap;max-width:320px;overflow:hidden;text-overflow:ellipsis}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.tag-si{background:var(--green-bg);color:var(--green)}.tag-no{background:var(--red-bg);color:var(--red)}
+.tbl-foot{padding:8px 12px;font-size:12px;color:#666;border-top:1px solid #eee;background:#f9f9f9;border-radius:0 0 8px 8px}
+a.pdf-link{color:var(--blue2);text-decoration:none;font-weight:600}
+a.pdf-link:hover{text-decoration:underline}
+.download-row{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
 </style>
 </head>
 <body>
 
 <header>
   <div>
-    <h1>Distinta Dinamica CMV</h1>
-    <div class="subtitle">Aggiorna distinte con verifica disegni PDF e riepilogo automatico</div>
+    <h1>📋 Distinta Dinamica CMV</h1>
+    <p>Verifica disegni PDF su Google Drive · Riepilogo automatico · Link diretti ai file</p>
   </div>
 </header>
 
 <div class="container">
 
-  <!-- STEP 1: CONFIG -->
-  <div class="card">
-    <div class="card-header">
-      <span class="step-number">1</span>
-      Configurazione Google Drive
+<!-- STEP 1 -->
+<div class="card">
+  <div class="card-head"><span class="n">1</span> Configurazione Google Drive</div>
+  <div class="card-body">
+    <div class="row">
+      <label>URL Apps Script:</label>
+      <input id="scriptUrl" type="text" placeholder="https://script.google.com/macros/s/…/exec">
+      <button class="btn btn-sm btn-primary" onclick="saveConfig()">Salva</button>
     </div>
-    <div class="card-body">
-      <div class="config-row">
-        <label>URL Apps Script:</label>
-        <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/xxxxx/exec">
-        <button class="btn btn-sm btn-primary" onclick="saveConfig()">Salva</button>
-      </div>
-      <div class="config-row">
-        <label>ID Cartella Drive:</label>
-        <input type="text" id="folderId" placeholder="Es: 1aBcDeFgHiJkLmNoPqRsTuVwXyZ">
-        <button class="btn btn-sm btn-primary" onclick="testConnection()">Test</button>
-      </div>
-      <div id="connectionStatus" class="hidden"></div>
-      <div class="help-text">
-        L'ID della cartella si trova nell'URL di Google Drive: drive.google.com/drive/folders/<strong>QUESTO_E_L_ID</strong>
-      </div>
+    <div class="row">
+      <label>Cartella Drive:</label>
+      <input id="folderId" type="text" placeholder="URL completo o solo ID della cartella">
+      <button class="btn btn-sm btn-primary" onclick="testConn()">Connetti</button>
     </div>
+    <div class="hint">
+      Incolla l'URL completo di Google Drive oppure solo l'ID.<br>
+      Esempio URL: <code>https://drive.google.com/drive/folders/<b>1d-ABToBITwsj68avWybrC3rOYcTqzeNd</b></code><br>
+      L'ID è la parte in grassetto dopo <code>/folders/</code> (taglia tutto ciò che viene dopo il <code>?</code>)
+    </div>
+    <div id="connStatus" class="hidden"></div>
   </div>
-
-  <!-- STEP 2: UPLOAD -->
-  <div class="card">
-    <div class="card-header">
-      <span class="step-number">2</span>
-      Carica il file Excel della Distinta
-    </div>
-    <div class="card-body">
-      <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
-        <div class="icon">📄</div>
-        <div class="text">Trascina qui il file Excel oppure clicca per selezionarlo</div>
-        <div class="hint">Formati supportati: .xlsx</div>
-      </div>
-      <input type="file" id="fileInput" accept=".xlsx,.xls" class="hidden">
-      <div id="fileInfo" class="hidden"></div>
-    </div>
-  </div>
-
-  <!-- STEP 3: PROCESS -->
-  <div class="card" id="processCard">
-    <div class="card-header">
-      <span class="step-number">3</span>
-      Elaborazione
-    </div>
-    <div class="card-body">
-      <div class="btn-group">
-        <button class="btn btn-orange" id="btnProcess" onclick="processFile()" disabled>
-          Aggiorna Distinta
-        </button>
-      </div>
-      <div id="resultsPanel" class="hidden" style="margin-top: 15px;">
-        <div class="results" id="stats"></div>
-      </div>
-      <div id="logPanel" class="hidden" style="margin-top: 15px;">
-        <div id="log"></div>
-      </div>
-      <div id="downloadPanel" class="hidden" style="margin-top: 15px;">
-        <button class="btn btn-success" id="btnDownload" onclick="downloadFile()">
-          Scarica File Aggiornato
-        </button>
-      </div>
-    </div>
-  </div>
-
 </div>
 
-<script>
-// ============================================================
-// GLOBAL STATE
-// ============================================================
-let uploadedFile = null;
-let uploadedWorkbook = null;
-let processedWorkbook = null;
-let originalFileName = '';
-let pdfFiles = [];
+<!-- STEP 2 -->
+<div class="card">
+  <div class="card-head"><span class="n">2</span> Carica la Distinta Excel</div>
+  <div class="card-body">
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fi').click()">
+      <div class="ico">📄</div>
+      <div class="txt">Trascina qui il file Excel oppure clicca per selezionarlo</div>
+      <div class="sub">Formato supportato: .xlsx — Foglio richiesto: DISTINTA</div>
+    </div>
+    <input type="file" id="fi" accept=".xlsx,.xls" class="hidden">
+    <div id="fileChip" class="hidden"></div>
+  </div>
+</div>
 
-// ============================================================
-// CONFIG (saved in localStorage)
-// ============================================================
+<!-- STEP 3 -->
+<div class="card">
+  <div class="card-head"><span class="n">3</span> Elabora e Scarica</div>
+  <div class="card-body">
+    <button class="btn btn-orange" id="btnRun" onclick="run()" disabled>⚡ Aggiorna Distinta</button>
+    <div id="logBox" class="hidden" style="margin-top:14px"><div id="log"></div></div>
+    <div id="statsBox" class="hidden" style="margin-top:12px">
+      <div class="stats" id="stats"></div>
+      <div class="download-row">
+        <button class="btn btn-success" id="btnDl" onclick="download()">⬇️ Scarica Excel Aggiornato</button>
+        <span id="dlNote" style="font-size:12px;color:#666"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div class="card hidden" id="tableCard">
+  <div class="card-head"><span class="n">4</span> Riepilogo Interattivo</div>
+  <div class="card-body">
+    <div class="tbl-toolbar">
+      <input id="srch" type="text" placeholder="🔍 Cerca codice o descrizione…" oninput="filterTable()">
+      <select id="fltForn" onchange="filterTable()"><option value="">Tutti i fornitori</option></select>
+      <select id="fltDrw" onchange="filterTable()">
+        <option value="">Tutti i disegni</option>
+        <option value="SI">✅ Con disegno</option>
+        <option value="NO">❌ Senza disegno</option>
+      </select>
+      <button class="btn btn-sm btn-primary" onclick="resetFilters()">Reset</button>
+    </div>
+    <div class="tbl-wrap">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th onclick="sortTable(0)">CODICE</th>
+            <th onclick="sortTable(1)">DESCRIZIONE</th>
+            <th onclick="sortTable(2)">FORNITORE CMV</th>
+            <th onclick="sortTable(3)" style="text-align:center">QTÀ UNIT.</th>
+            <th onclick="sortTable(4)" style="text-align:center">QTÀ TOTALE</th>
+            <th onclick="sortTable(5)" style="text-align:right">PREZZO €</th>
+            <th style="text-align:center">DISEGNO</th>
+          </tr>
+        </thead>
+        <tbody id="tblBody"></tbody>
+      </table>
+    </div>
+    <div class="tbl-foot" id="tblFoot"></div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// ─── STATE ────────────────────────────────────────────────
+let wb = null, filename = '', pdfFiles = [], processed = null;
+let tableData = [];  // {code, desc, forn, qty, qtyTot, price, pdfUrl}
+let sortCol = -1, sortDir = 1;
+
+// ─── UTILS ────────────────────────────────────────────────
+function extractId(val) {
+  val = val.trim();
+  // Full URL like https://drive.google.com/drive/folders/1d-ABToBIT...?dmr=1
+  const m = val.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  if (m) return m[1];
+  // Already an ID (no slashes)
+  if (!val.includes('/') && !val.includes('?')) return val;
+  // URL with query string only
+  return val.split('?')[0].split('/').pop();
+}
+
+function log(msg, type) {
+  const el = document.getElementById('log');
+  document.getElementById('logBox').classList.remove('hidden');
+  const d = document.createElement('div');
+  d.className = type||'';
+  d.textContent = '› ' + msg;
+  el.appendChild(d);
+  el.scrollTop = el.scrollHeight;
+}
+
 function loadConfig() {
-  const url = localStorage.getItem('distinta_scriptUrl') || '';
-  const folder = localStorage.getItem('distinta_folderId') || '';
-  document.getElementById('scriptUrl').value = url;
-  document.getElementById('folderId').value = folder;
+  document.getElementById('scriptUrl').value = localStorage.getItem('cmv_script')||'';
+  document.getElementById('folderId').value = localStorage.getItem('cmv_folder')||'';
 }
 
 function saveConfig() {
-  localStorage.setItem('distinta_scriptUrl', document.getElementById('scriptUrl').value.trim());
-  localStorage.setItem('distinta_folderId', document.getElementById('folderId').value.trim());
-  log('Configurazione salvata', 'ok');
-}
-
-// ============================================================
-// GOOGLE DRIVE CONNECTION
-// ============================================================
-async function testConnection() {
-  const scriptUrl = document.getElementById('scriptUrl').value.trim();
-  const folderId = document.getElementById('folderId').value.trim();
-  const statusEl = document.getElementById('connectionStatus');
-  statusEl.classList.remove('hidden');
-
-  if (!scriptUrl || !folderId) {
-    statusEl.className = 'status-bar disconnected';
-    statusEl.innerHTML = '&#10060; Compila entrambi i campi';
-    return;
-  }
-
-  statusEl.className = 'status-bar disconnected';
-  statusEl.innerHTML = '&#9203; Connessione in corso...';
-
-  try {
-    const url = scriptUrl + '?folderId=' + encodeURIComponent(folderId);
-    const resp = await fetch(url);
-    const data = await resp.json();
-
-    if (data.status === 'ok') {
-      pdfFiles = data.files || [];
-      statusEl.className = 'status-bar connected';
-      statusEl.innerHTML = '&#9989; Connesso! Cartella: <strong>' + data.folderName +
-        '</strong> — ' + data.fileCount + ' PDF trovati';
-      saveConfig();
-      checkReady();
-    } else {
-      statusEl.className = 'status-bar disconnected';
-      statusEl.innerHTML = '&#10060; Errore: ' + (data.message || 'Sconosciuto');
-    }
-  } catch (err) {
-    statusEl.className = 'status-bar disconnected';
-    statusEl.innerHTML = '&#10060; Errore di connessione: ' + err.message;
-  }
-}
-
-// ============================================================
-// FILE UPLOAD
-// ============================================================
-const dropZone = document.getElementById('dropZone');
-const fileInput = document.getElementById('fileInput');
-
-dropZone.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  dropZone.classList.add('dragover');
-});
-
-dropZone.addEventListener('dragleave', () => {
-  dropZone.classList.remove('dragover');
-});
-
-dropZone.addEventListener('drop', (e) => {
-  e.preventDefault();
-  dropZone.classList.remove('dragover');
-  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
-});
-
-fileInput.addEventListener('change', (e) => {
-  if (e.target.files.length) handleFile(e.target.files[0]);
-});
-
-function handleFile(file) {
-  if (!file.name.match(/\.xlsx?$/i)) {
-    alert('Seleziona un file .xlsx');
-    return;
-  }
-
-  uploadedFile = file;
-  originalFileName = file.name;
-
-  const infoEl = document.getElementById('fileInfo');
-  infoEl.classList.remove('hidden');
-  infoEl.innerHTML = '<div class="file-info">' +
-    '<span style="font-size:24px">📊</span>' +
-    '<div><div class="name">' + file.name + '</div>' +
-    '<div class="size">' + (file.size / 1024).toFixed(1) + ' KB</div></div>' +
-    '</div>';
-
-  // Read the file
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      uploadedWorkbook = XLSX.read(e.target.result, { type: 'array', cellStyles: true });
-      log('File caricato: ' + file.name + ' (' + uploadedWorkbook.SheetNames.length + ' fogli)', 'ok');
-      checkReady();
-    } catch (err) {
-      log('Errore lettura file: ' + err.message, 'err');
-    }
-  };
-  reader.readAsArrayBuffer(file);
+  localStorage.setItem('cmv_script', document.getElementById('scriptUrl').value.trim());
+  localStorage.setItem('cmv_folder', document.getElementById('folderId').value.trim());
+  log('Configurazione salvata ✓', 'ok');
 }
 
 function checkReady() {
-  const btn = document.getElementById('btnProcess');
-  btn.disabled = !(uploadedWorkbook && pdfFiles.length >= 0);
+  document.getElementById('btnRun').disabled = !(wb && pdfFiles !== null);
 }
 
-// ============================================================
-// LOGGING
-// ============================================================
-function log(msg, type) {
-  const logEl = document.getElementById('log');
-  const logPanel = document.getElementById('logPanel');
-  logPanel.classList.remove('hidden');
-  const span = document.createElement('div');
-  span.className = type || '';
-  span.textContent = '> ' + msg;
-  logEl.appendChild(span);
-  logEl.scrollTop = logEl.scrollHeight;
-}
+// ─── CONNECTION ───────────────────────────────────────────
+async function testConn() {
+  const script = document.getElementById('scriptUrl').value.trim();
+  const raw = document.getElementById('folderId').value.trim();
+  const fid = extractId(raw);
+  const st = document.getElementById('connStatus');
+  st.className = 'status loading'; st.classList.remove('hidden');
+  st.innerHTML = '⏳ Connessione in corso…';
 
-// ============================================================
-// MAIN PROCESSING
-// ============================================================
-async function processFile() {
-  if (!uploadedWorkbook) {
-    alert('Carica prima un file Excel');
-    return;
+  if (!script || !fid) {
+    st.className = 'status err'; st.textContent = '❌ Compila URL Apps Script e cartella Drive'; return;
   }
 
-  // If not connected to Drive yet, try connecting first
-  if (pdfFiles.length === 0) {
-    const scriptUrl = document.getElementById('scriptUrl').value.trim();
-    const folderId = document.getElementById('folderId').value.trim();
-    if (scriptUrl && folderId) {
-      await testConnection();
-    }
+  // Show extracted ID
+  if (fid !== raw) {
+    document.getElementById('folderId').value = fid;
+    st.innerHTML = '⏳ ID estratto: <b>' + fid + '</b> — Connessione…';
   }
-
-  document.getElementById('btnProcess').disabled = true;
-  document.getElementById('log').innerHTML = '';
-  document.getElementById('resultsPanel').classList.remove('hidden');
 
   try {
-    const wb = uploadedWorkbook;
+    const r = await fetch(script + '?folderId=' + encodeURIComponent(fid));
+    const d = await r.json();
+    if (d.status === 'ok') {
+      pdfFiles = d.files || [];
+      st.className = 'status ok';
+      st.innerHTML = '✅ Connesso! Cartella: <b>' + d.folderName + '</b> — ' + d.fileCount + ' PDF trovati';
+      saveConfig();
+      checkReady();
+    } else {
+      st.className = 'status err';
+      st.innerHTML = '❌ Errore: ' + (d.message||'Sconosciuto');
+    }
+  } catch(e) {
+    st.className = 'status err';
+    st.innerHTML = '❌ Errore connessione: ' + e.message;
+  }
+}
 
-    // Verify DISTINTA sheet exists
+// ─── FILE UPLOAD ──────────────────────────────────────────
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); if(e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); });
+document.getElementById('fi').addEventListener('change', e => { if(e.target.files[0]) loadFile(e.target.files[0]); });
+
+function loadFile(f) {
+  if (!f.name.match(/\.xlsx?$/i)) { alert('Seleziona un file .xlsx'); return; }
+  filename = f.name;
+  const chip = document.getElementById('fileChip');
+  chip.classList.remove('hidden');
+  chip.innerHTML = '<div class="file-chip"><span style="font-size:22px">📊</span><div><div class="nm">'+f.name+'</div><div class="sz">'+Math.round(f.size/1024)+' KB</div></div></div>';
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      wb = XLSX.read(new Uint8Array(e.target.result), { type:'array', cellStyles:true, cellDates:true });
+      log('File caricato: ' + f.name, 'ok');
+      checkReady();
+    } catch(err) { log('Errore lettura: '+err.message,'err'); }
+  };
+  reader.readAsArrayBuffer(f);
+}
+
+// ─── MAIN PROCESS ─────────────────────────────────────────
+async function run() {
+  if (!wb) { alert('Carica prima un file Excel'); return; }
+
+  // Try connecting if needed
+  if (!pdfFiles || pdfFiles.length === 0) {
+    const script = document.getElementById('scriptUrl').value.trim();
+    const fid = extractId(document.getElementById('folderId').value.trim());
+    if (script && fid) await testConn();
+  }
+
+  document.getElementById('btnRun').disabled = true;
+  document.getElementById('log').innerHTML = '';
+  document.getElementById('logBox').classList.remove('hidden');
+  document.getElementById('statsBox').classList.add('hidden');
+  document.getElementById('tableCard').classList.add('hidden');
+
+  try {
     if (!wb.Sheets['DISTINTA']) {
-      log('Foglio DISTINTA non trovato! Fogli disponibili: ' + wb.SheetNames.join(', '), 'err');
+      log('Foglio DISTINTA non trovato! Fogli: ' + wb.SheetNames.join(', '), 'err');
       return;
     }
 
-    const ws = wb.Sheets['DISTINTA'];
-    log('Foglio DISTINTA trovato', 'info');
-
-    // Get multiplier from E2
-    const multCell = ws['E2'];
-    const multiplier = multCell ? (Number(multCell.v) || 1) : 1;
-    log('Moltiplicatore linee: ' + multiplier, 'info');
-
-    // Build PDF code map
+    // --- BUILD PDF MAP ---
     const pdfMap = {};
-    pdfFiles.forEach(f => {
-      // Extract code from filename: e.g. "b365016216_r01.pdf" -> "B365016216"
+    (pdfFiles||[]).forEach(f => {
       const name = f.name;
-      let code = name.split('_')[0].toUpperCase();
-      if (code.startsWith('PDF_')) code = code.substring(4);
-      pdfMap[code] = f;
-      // Also store without dashes
-      pdfMap[code.replace(/-/g, '')] = f;
+      let c = name.split('_')[0].toUpperCase();
+      if (c.startsWith('PDF_')) c = c.slice(4);
+      pdfMap[c] = f;
+      pdfMap[c.replace(/-/g,'')] = f;
     });
-    log('PDF indicizzati: ' + pdfFiles.length, 'info');
+    log('PDF indicizzati: ' + (pdfFiles||[]).length, 'info');
 
-    // Find the data range
+    // --- DEEP CLONE workbook sheets ---
+    const newWb = {
+      SheetNames: [],
+      Sheets: {}
+    };
+
+    // Keep all original sheets
+    wb.SheetNames.forEach(n => {
+      newWb.SheetNames.push(n);
+      newWb.Sheets[n] = cloneSheet(wb.Sheets[n]);
+    });
+
+    const ws = newWb.Sheets['DISTINTA'];
     const range = XLSX.utils.decode_range(ws['!ref']);
-    log('Range dati: ' + ws['!ref'] + ' (' + (range.e.r - 3) + ' righe)', 'info');
+    const multCell = ws['E2'];
+    const mult = multCell ? (Number(multCell.v)||1) : 1;
+    log('Moltiplicatore: ' + mult, 'info');
 
-    // Process DISTINTA rows
-    let totalRows = 0, siCount = 0, noCount = 0;
-    const uniqueCodes = {};
-    const codeOrder = [];
+    // --- PROCESS DISTINTA ROWS ---
+    let total=0, si=0, no=0;
+    const unique = {};
+    const codeSeq = [];
+    const links = []; // for !links array
 
-    for (let r = 4; r <= range.e.r; r++) {
-      const codeCell = ws[XLSX.utils.encode_cell({r: r, c: 3})]; // Column D
-      if (!codeCell || !codeCell.v || String(codeCell.v).trim() === '') continue;
+    for (let r=4; r<=range.e.r; r++) {
+      const dCell = ws[XLSX.utils.encode_cell({r, c:3})];
+      if (!dCell || !dCell.v || String(dCell.v).trim()==='') continue;
 
-      const code = String(codeCell.v).trim();
-      const codeUpper = code.toUpperCase();
-      const descCell = ws[XLSX.utils.encode_cell({r: r, c: 4})]; // Column E
-      const qtyCell = ws[XLSX.utils.encode_cell({r: r, c: 5})]; // Column F
-      const fornCell = ws[XLSX.utils.encode_cell({r: r, c: 12})]; // Column M
-      const priceCell = ws[XLSX.utils.encode_cell({r: r, c: 10})]; // Column K
-      const qty = qtyCell ? (Number(qtyCell.v) || 0) : 0;
-      const qtyTotal = qty * multiplier;
+      const code = String(dCell.v).trim();
+      const cu = code.toUpperCase();
+      const qty = Number((ws[XLSX.utils.encode_cell({r,c:5})]||{}).v||0);
+      const desc = String((ws[XLSX.utils.encode_cell({r,c:4})]||{}).v||'');
+      const forn = String((ws[XLSX.utils.encode_cell({r,c:12})]||{}).v||'');
+      const price = Number((ws[XLSX.utils.encode_cell({r,c:10})]||{}).v||0);
+      const pdf = pdfMap[cu] || pdfMap[cu.replace(/-/g,'')];
 
-      // Check if PDF exists
-      const found = pdfMap[codeUpper] || pdfMap[codeUpper.replace(/-/g, '')];
-      const nRef = XLSX.utils.encode_cell({r: r, c: 13}); // Column N
-      const oRef = XLSX.utils.encode_cell({r: r, c: 14}); // Column O
+      // Col N — DISEGNI
+      const nRef = XLSX.utils.encode_cell({r, c:13});
+      ws[nRef] = { t:'s', v: pdf?'SI':'NO' };
 
-      // Update column N
-      ws[nRef] = { t: 's', v: found ? 'SI' : 'NO' };
+      // Col O — QTA TOTALE
+      const oRef = XLSX.utils.encode_cell({r, c:14});
+      ws[oRef] = { t:'n', v: qty*mult };
 
-      // Update column O (QTA TOTALE)
-      ws[oRef] = { t: 'n', v: qtyTotal, f: 'F' + (r+1) + '*$E$2' };
-
-      // Add hyperlink to column D if PDF found
-      if (found) {
-        codeCell.l = { Target: found.url, Tooltip: 'Apri disegno PDF' };
-        siCount++;
+      // Hyperlink on code cell (col D)
+      if (pdf) {
+        dCell.l = { Target: pdf.url, Tooltip: 'Apri disegno PDF' };
+        links.push({ ref: XLSX.utils.encode_cell({r, c:3}), l: { Target: pdf.url } });
+        si++;
       } else {
-        delete codeCell.l;
-        noCount++;
+        delete dCell.l;
+        no++;
       }
+      total++;
 
-      totalRows++;
-
-      // Track for RIEPILOGO
-      if (!uniqueCodes[code]) {
-        uniqueCodes[code] = {
-          desc: descCell ? String(descCell.v || '') : '',
-          qty: 0,
-          qtyTotal: 0,
-          forn: fornCell ? String(fornCell.v || '') : '',
-          price: priceCell ? (Number(priceCell.v) || 0) : 0,
-          pdfUrl: found ? found.url : null
-        };
-        codeOrder.push(code);
+      if (!unique[code]) {
+        unique[code] = { desc, qty:0, qtyTot:0, forn, price, pdfUrl: pdf?pdf.url:null };
+        codeSeq.push(code);
       }
-      uniqueCodes[code].qty += qty;
-      uniqueCodes[code].qtyTotal += qtyTotal;
-
-      // Prefer non-empty fornitore
-      if (fornCell && fornCell.v && !uniqueCodes[code].forn) {
-        uniqueCodes[code].forn = String(fornCell.v);
-      }
+      unique[code].qty += qty;
+      unique[code].qtyTot += qty*mult;
+      if (forn && !unique[code].forn) unique[code].forn = forn;
     }
 
-    log('Righe elaborate: ' + totalRows, 'ok');
-    log('Disegni trovati: ' + siCount + ' SI, ' + noCount + ' NO', siCount > 0 ? 'ok' : 'warn');
+    ws['!links'] = links;
+    log('Righe: '+total+' | SI: '+si+' | NO: '+no, si>0?'ok':'warn');
 
-    // Sort codes alphabetically
-    codeOrder.sort();
+    codeSeq.sort();
+    tableData = codeSeq.map(c => ({ code:c, ...unique[c] }));
 
-    // ============================================================
-    // REBUILD RIEPILOGO SHEET
-    // ============================================================
-    log('Ricostruzione foglio RIEPILOGO...', 'info');
-
-    // Create RIEPILOGO data as array of arrays
-    const riepData = [];
-    // Row 0: Title
-    riepData.push(['RIEPILOGO CODICI - Quantita Totali per Codice', '', '', '', '', '']);
-    // Row 1: Info
-    riepData.push(['Moltiplicatore linee: ' + multiplier + ' | Codici univoci: ' + codeOrder.length, '', '', '', '', '']);
-    // Row 2: blank
-    riepData.push(['', '', '', '', '', '']);
-    // Row 3: Headers
-    riepData.push(['CODICE', 'DESCRIZIONE', 'FORNITORE CMV', 'QTA UNITARIA\n(1 linea)', 'QTA TOTALE\n(x Linee)', 'PREZZO UNIT. (€)']);
-
-    // Data rows
-    let sumQty = 0, sumQtyTot = 0;
-    codeOrder.forEach(code => {
-      const d = uniqueCodes[code];
-      riepData.push([code, d.desc, d.forn, d.qty, d.qtyTotal, d.price]);
-      sumQty += d.qty;
-      sumQtyTot += d.qtyTotal;
-    });
-
-    // TOTALE row
-    riepData.push(['TOTALE', '', '', sumQty, sumQtyTot, '']);
-
-    // Create the sheet
-    const wsRiep = XLSX.utils.aoa_to_sheet(riepData);
-
-    // Set column widths
-    wsRiep['!cols'] = [
-      { wch: 20 }, { wch: 45 }, { wch: 20 },
-      { wch: 14 }, { wch: 14 }, { wch: 14 }
+    // --- REBUILD RIEPILOGO ---
+    const rRows = [
+      ['RIEPILOGO CODICI — Quantità Totali per Codice','','','','',''],
+      ['Moltiplicatore: '+mult+'   |   Codici univoci: '+codeSeq.length,'','','','',''],
+      ['','','','','',''],
+      ['CODICE','DESCRIZIONE','FORNITORE CMV','QTÀ UNITARIA','QTÀ TOTALE','PREZZO €']
     ];
 
-    // Add hyperlinks to codes in RIEPILOGO
-    codeOrder.forEach((code, i) => {
-      const d = uniqueCodes[code];
-      if (d.pdfUrl) {
-        const cellRef = XLSX.utils.encode_cell({r: 4 + i, c: 0}); // Column A, row 5+
-        if (wsRiep[cellRef]) {
-          wsRiep[cellRef].l = { Target: d.pdfUrl, Tooltip: 'Apri disegno PDF' };
-        }
-      }
+    let sumU=0, sumT=0;
+    const riepLinks = [];
+    codeSeq.forEach((c,i) => {
+      const d = unique[c];
+      rRows.push([c, d.desc, d.forn||'', d.qty, d.qtyTot, d.price]);
+      sumU += d.qty; sumT += d.qtyTot;
+      if (d.pdfUrl) riepLinks.push({ ref: XLSX.utils.encode_cell({r:4+i,c:0}), l:{Target:d.pdfUrl} });
     });
+    rRows.push(['TOTALE','','',sumU,sumT,'']);
 
-    // Merge title cells
-    wsRiep['!merges'] = [
-      { s: {r:0,c:0}, e: {r:0,c:5} },
-      { s: {r:1,c:0}, e: {r:1,c:5} }
+    const wsR = XLSX.utils.aoa_to_sheet(rRows);
+    wsR['!cols'] = [{wch:22},{wch:46},{wch:22},{wch:13},{wch:13},{wch:13}];
+    wsR['!merges'] = [
+      {s:{r:0,c:0},e:{r:0,c:5}},
+      {s:{r:1,c:0},e:{r:1,c:5}}
+    ];
+    wsR['!links'] = riepLinks;
+
+    // Ensure RIEPILOGO in workbook
+    if (!newWb.SheetNames.includes('RIEPILOGO')) newWb.SheetNames.push('RIEPILOGO');
+    newWb.Sheets['RIEPILOGO'] = wsR;
+    log('RIEPILOGO: '+codeSeq.length+' codici univoci', 'ok');
+
+    // --- REBUILD EXPORT CMV ---
+    const N = codeSeq.length;
+    const eRows = [
+      ['EXPORT ORDINE — Filtra per Fornitore CMV','','','','','',''],
+      ['FORNITORE DA FILTRARE:','','','','← Digita nella cella C2 del file Excel','',''],
+      ['','','','','','',''],
+      ['CODICE','DESCRIZIONE','FORNITORE CMV','QTÀ TOTALE','PREZZO €','NOTE','_helper']
     ];
 
-    wb.Sheets['RIEPILOGO'] = wsRiep;
-    log('RIEPILOGO: ' + codeOrder.length + ' codici univoci', 'ok');
-
-    // ============================================================
-    // REBUILD EXPORT CMV SHEET
-    // ============================================================
-    log('Ricostruzione foglio EXPORT CMV...', 'info');
-
-    const exportData = [];
-    exportData.push(['EXPORT ORDINE - Filtra per Fornitore CMV', '', '', '', '', '', '']);
-    exportData.push(['FORNITORE CMV:', '', '', '', '<-- Digita il nome nella cella C2 del file scaricato', '', '']);
-    exportData.push(['', '', '', '', '', '', '']);
-    exportData.push(['CODICE', 'DESCRIZIONE', 'FORNITORE CMV', 'QTA TOTALE', 'PREZZO UNIT. (€)', 'NOTE', '_helper']);
-
-    // Pre-fill formula rows referencing RIEPILOGO
-    const riepLastRow = 4 + codeOrder.length; // 0-indexed last data row
-    for (let i = 0; i < codeOrder.length; i++) {
-      const row = 5 + i; // Excel row (1-indexed)
-      const riepRow = 5 + i;
-      const rangeStr = 'RIEPILOGO!$C$5:$C$' + riepRow;
-      exportData.push([
-        { f: 'IFERROR(IF($C$2="","",INDEX(RIEPILOGO!$A$5:$A$' + (4+codeOrder.length) + ',MATCH(ROW()-4,$G$5:$G$' + (4+codeOrder.length) + ',0))),"")' },
-        { f: 'IFERROR(IF($C$2="","",INDEX(RIEPILOGO!$B$5:$B$' + (4+codeOrder.length) + ',MATCH(ROW()-4,$G$5:$G$' + (4+codeOrder.length) + ',0))),"")' },
-        { f: 'IFERROR(IF($C$2="","",INDEX(RIEPILOGO!$C$5:$C$' + (4+codeOrder.length) + ',MATCH(ROW()-4,$G$5:$G$' + (4+codeOrder.length) + ',0))),"")' },
-        { f: 'IFERROR(IF($C$2="","",INDEX(RIEPILOGO!$E$5:$E$' + (4+codeOrder.length) + ',MATCH(ROW()-4,$G$5:$G$' + (4+codeOrder.length) + ',0))),"")' },
-        { f: 'IFERROR(IF($C$2="","",INDEX(RIEPILOGO!$F$5:$F$' + (4+codeOrder.length) + ',MATCH(ROW()-4,$G$5:$G$' + (4+codeOrder.length) + ',0))),"")' },
+    for (let i=0; i<N; i++) {
+      const rr = 5+i;   // 1-based Excel row in RIEPILOGO
+      eRows.push([
+        { f:`IFERROR(IF($C$2="","",INDEX(RIEPILOGO!$A$5:$A$${4+N},MATCH(ROW()-4,$G$5:$G$${4+N},0))),"")` },
+        { f:`IFERROR(IF($C$2="","",INDEX(RIEPILOGO!$B$5:$B$${4+N},MATCH(ROW()-4,$G$5:$G$${4+N},0))),"")` },
+        { f:`IFERROR(IF($C$2="","",INDEX(RIEPILOGO!$C$5:$C$${4+N},MATCH(ROW()-4,$G$5:$G$${4+N},0))),"")` },
+        { f:`IFERROR(IF($C$2="","",INDEX(RIEPILOGO!$E$5:$E$${4+N},MATCH(ROW()-4,$G$5:$G$${4+N},0))),"")` },
+        { f:`IFERROR(IF($C$2="","",INDEX(RIEPILOGO!$F$5:$F$${4+N},MATCH(ROW()-4,$G$5:$G$${4+N},0))),"")` },
         '',
-        { f: 'IF($C$2=""," ",IF(RIEPILOGO!C' + riepRow + '=$C$2,COUNTIF(' + rangeStr + ',$C$2),""))' }
+        { f:`IF($C$2=""," ",IF(RIEPILOGO!C${rr}=$C$2,COUNTIF(RIEPILOGO!$C$5:$C$${rr},$C$2),""))` }
       ]);
     }
 
-    const wsExport = XLSX.utils.aoa_to_sheet(exportData);
-    wsExport['!cols'] = [
-      { wch: 20 }, { wch: 45 }, { wch: 20 },
-      { wch: 18 }, { wch: 16 }, { wch: 20 }, { wch: 8, hidden: true }
-    ];
-    wsExport['!merges'] = [
-      { s: {r:0,c:0}, e: {r:0,c:6} },
-      { s: {r:1,c:3}, e: {r:1,c:6} }
-    ];
+    const wsE = XLSX.utils.aoa_to_sheet(eRows);
+    wsE['!cols'] = [{wch:22},{wch:46},{wch:22},{wch:14},{wch:13},{wch:22},{wch:8,hidden:true}];
+    wsE['!merges'] = [{s:{r:0,c:0},e:{r:0,c:6}}];
 
-    wb.Sheets['EXPORT CMV'] = wsExport;
-    log('EXPORT CMV: ' + codeOrder.length + ' righe formula', 'ok');
+    if (!newWb.SheetNames.includes('EXPORT CMV')) newWb.SheetNames.push('EXPORT CMV');
+    newWb.Sheets['EXPORT CMV'] = wsE;
+    log('EXPORT CMV: '+N+' righe formula', 'ok');
 
-    // Ensure sheet order
-    wb.SheetNames = ['DISTINTA', 'RIEPILOGO', 'EXPORT CMV'];
-    if (uploadedWorkbook.SheetNames.includes('ISTRUZIONI')) {
-      wb.SheetNames.push('ISTRUZIONI');
+    // Keep ISTRUZIONI if present
+    if (wb.Sheets['ISTRUZIONI'] && !newWb.SheetNames.includes('ISTRUZIONI')) {
+      newWb.SheetNames.push('ISTRUZIONI');
+      newWb.Sheets['ISTRUZIONI'] = wb.Sheets['ISTRUZIONI'];
     }
 
-    processedWorkbook = wb;
+    // Reorder sheets
+    const order = ['DISTINTA','RIEPILOGO','EXPORT CMV'];
+    newWb.SheetNames.forEach(s => { if (!order.includes(s)) order.push(s); });
+    newWb.SheetNames = order.filter(s => newWb.Sheets[s]);
 
-    // Show stats
+    processed = newWb;
+
+    // Stats
     document.getElementById('stats').innerHTML =
-      '<div class="stat"><div class="value">' + totalRows + '</div><div class="label">Righe Distinta</div></div>' +
-      '<div class="stat green"><div class="value">' + siCount + '</div><div class="label">Disegni Trovati (SI)</div></div>' +
-      '<div class="stat red"><div class="value">' + noCount + '</div><div class="label">Disegni Mancanti (NO)</div></div>' +
-      '<div class="stat"><div class="value">' + codeOrder.length + '</div><div class="label">Codici Univoci</div></div>' +
-      '<div class="stat"><div class="value">' + pdfFiles.length + '</div><div class="label">PDF su Drive</div></div>' +
-      '<div class="stat"><div class="value">' + multiplier + '</div><div class="label">Moltiplicatore</div></div>';
+      `<div class="stat"><div class="v">${total}</div><div class="l">Righe Distinta</div></div>
+       <div class="stat g"><div class="v">${si}</div><div class="l">Disegni Trovati ✅</div></div>
+       <div class="stat r"><div class="v">${no}</div><div class="l">Disegni Mancanti ❌</div></div>
+       <div class="stat"><div class="v">${codeSeq.length}</div><div class="l">Codici Univoci</div></div>
+       <div class="stat"><div class="v">${(pdfFiles||[]).length}</div><div class="l">PDF su Drive</div></div>
+       <div class="stat"><div class="v">${mult}</div><div class="l">Moltiplicatore</div></div>`;
+    document.getElementById('statsBox').classList.remove('hidden');
 
-    log('ELABORAZIONE COMPLETATA!', 'ok');
+    log('✅ ELABORAZIONE COMPLETATA!', 'ok');
 
-    document.getElementById('downloadPanel').classList.remove('hidden');
+    // Build table
+    buildTable();
 
-  } catch (err) {
-    log('ERRORE: ' + err.message, 'err');
-    console.error(err);
+  } catch(e) {
+    log('ERRORE: '+e.message, 'err');
+    console.error(e);
   } finally {
-    document.getElementById('btnProcess').disabled = false;
+    document.getElementById('btnRun').disabled = false;
   }
 }
 
-// ============================================================
-// DOWNLOAD
-// ============================================================
-function downloadFile() {
-  if (!processedWorkbook) return;
-
-  const wbout = XLSX.write(processedWorkbook, {
-    bookType: 'xlsx',
-    type: 'array',
-    cellStyles: true
+// ─── CLONE SHEET ──────────────────────────────────────────
+function cloneSheet(ws) {
+  const out = {};
+  Object.keys(ws).forEach(k => {
+    if (k === '!ref' || k === '!cols' || k === '!rows' || k === '!merges' || k === '!links') {
+      out[k] = JSON.parse(JSON.stringify(ws[k]));
+    } else if (typeof ws[k] === 'object') {
+      out[k] = Object.assign({}, ws[k]);
+    } else {
+      out[k] = ws[k];
+    }
   });
-
-  const blob = new Blob([wbout], { type: 'application/octet-stream' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  const newName = originalFileName.replace('.xlsx', '_AGGIORNATO.xlsx');
-  a.href = url;
-  a.download = newName;
-  a.click();
-  URL.revokeObjectURL(url);
-  log('File scaricato: ' + newName, 'ok');
+  return out;
 }
 
-// ============================================================
-// INIT
-// ============================================================
+// ─── DOWNLOAD ─────────────────────────────────────────────
+function download() {
+  if (!processed) return;
+  const out = XLSX.write(processed, { bookType:'xlsx', type:'array', bookSST:false });
+  const blob = new Blob([out], { type:'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename.replace(/\.xlsx?$/i,'') + '_AGGIORNATO.xlsx';
+  a.click();
+  URL.revokeObjectURL(url);
+  document.getElementById('dlNote').textContent = '✓ File scaricato — ' + a.download;
+  log('File scaricato: '+a.download, 'ok');
+}
+
+// ─── TABLE ────────────────────────────────────────────────
+function buildTable() {
+  // Populate fornitore filter
+  const sel = document.getElementById('fltForn');
+  sel.innerHTML = '<option value="">Tutti i fornitori</option>';
+  const forns = [...new Set(tableData.map(d=>d.forn).filter(Boolean))].sort();
+  forns.forEach(f => {
+    const o = document.createElement('option');
+    o.value = f; o.textContent = f; sel.appendChild(o);
+  });
+
+  renderTable(tableData);
+  document.getElementById('tableCard').classList.remove('hidden');
+  document.getElementById('tableCard').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function filterTable() {
+  const q = document.getElementById('srch').value.toLowerCase();
+  const f = document.getElementById('fltForn').value;
+  const d = document.getElementById('fltDrw').value;
+  let rows = tableData;
+  if (q) rows = rows.filter(r => r.code.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q));
+  if (f) rows = rows.filter(r => r.forn === f);
+  if (d) rows = rows.filter(r => (r.pdfUrl?'SI':'NO') === d);
+  renderTable(rows);
+}
+
+function resetFilters() {
+  document.getElementById('srch').value='';
+  document.getElementById('fltForn').value='';
+  document.getElementById('fltDrw').value='';
+  renderTable(tableData);
+}
+
+let _sortDir = {};
+function sortTable(col) {
+  _sortDir[col] = (_sortDir[col]===1) ? -1 : 1;
+  // Update headers
+  document.querySelectorAll('#tbl thead th').forEach((th,i) => {
+    th.className = i===col ? (_sortDir[col]===1?'sort-asc':'sort-desc') : '';
+  });
+  const keys = ['code','desc','forn','qty','qtyTot','price'];
+  const k = keys[col];
+  tableData.sort((a,b) => {
+    const av = a[k]||0, bv = b[k]||0;
+    if (typeof av==='string') return _sortDir[col]*av.localeCompare(bv);
+    return _sortDir[col]*(av-bv);
+  });
+  filterTable();
+}
+
+function renderTable(rows) {
+  const tbody = document.getElementById('tblBody');
+  tbody.innerHTML = '';
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    const hasPdf = !!r.pdfUrl;
+    const codeCell = hasPdf
+      ? `<a class="pdf-link" href="${r.pdfUrl}" target="_blank" title="Apri PDF su Drive">🔗 ${r.code}</a>`
+      : r.code;
+    const tag = hasPdf
+      ? '<span class="tag tag-si">✅ SI</span>'
+      : '<span class="tag tag-no">❌ NO</span>';
+    tr.innerHTML =
+      `<td>${codeCell}</td>
+       <td title="${r.desc}">${r.desc}</td>
+       <td>${r.forn||'—'}</td>
+       <td style="text-align:center;font-weight:600">${r.qty}</td>
+       <td style="text-align:center;font-weight:600">${r.qtyTot}</td>
+       <td style="text-align:right">${r.price?r.price.toFixed(2):''}</td>
+       <td style="text-align:center">${tag}</td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('tblFoot').textContent =
+    rows.length + ' di ' + tableData.length + ' codici' +
+    (rows.length < tableData.length ? ' (filtrati)' : '');
+}
+
+// ─── INIT ─────────────────────────────────────────────────
 loadConfig();
 </script>
-
 </body>
 </html>
