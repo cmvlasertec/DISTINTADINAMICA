@@ -7,593 +7,639 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root {
-  --blue:#1F3864; --blue2:#2E75B6; --blue-bg:#DEEAF1;
-  --orange:#C55A11; --green:#006100; --green-bg:#C6EFCE;
-  --red:#9C0006; --red-bg:#FFC7CE; --gray:#f5f6fa;
-  --shadow:0 2px 10px rgba(0,0,0,.1);
+  --blue:#1F3864; --blue2:#2E75B6; --blue-bg:#DEEAF1; --blue-row:#EBF3FB;
+  --orange:#C55A11; --orange-bg:#FCE4D6;
+  --green:#006100; --green-bg:#C6EFCE;
+  --red:#9C0006; --red-bg:#FFC7CE;
+  --gray:#f4f6fb; --white:#fff;
+  --shadow:0 2px 12px rgba(31,56,100,.12);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Arial,sans-serif;background:var(--gray);color:#333}
-header{background:var(--blue);color:#fff;padding:18px 30px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)}
-header h1{font-size:20px;font-weight:700}
-header p{font-size:12px;opacity:.75;margin-top:2px}
-.container{max-width:1000px;margin:24px auto;padding:0 16px}
-.card{background:#fff;border-radius:10px;box-shadow:var(--shadow);margin-bottom:18px;overflow:hidden}
-.card-head{background:var(--blue2);color:#fff;padding:11px 18px;font-weight:600;font-size:13px;display:flex;align-items:center;gap:8px}
-.card-head .n{background:#fff;color:var(--blue2);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--gray);color:#222;min-height:100vh}
+
+/* HEADER */
+header{background:linear-gradient(135deg,var(--blue) 0%,var(--blue2) 100%);color:#fff;padding:16px 28px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow)}
+.logo{font-size:28px}
+header h1{font-size:20px;font-weight:700;letter-spacing:.3px}
+header p{font-size:11px;opacity:.75;margin-top:3px}
+
+/* CARDS */
+.container{max-width:1100px;margin:22px auto;padding:0 16px}
+.card{background:var(--white);border-radius:12px;box-shadow:var(--shadow);margin-bottom:18px;overflow:hidden}
+.card-head{background:var(--blue2);color:#fff;padding:10px 18px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;letter-spacing:.2px}
+.card-head .n{background:rgba(255,255,255,.25);border:2px solid rgba(255,255,255,.6);width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0}
 .card-body{padding:18px}
+
+/* FORM */
 .row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.row label{font-size:12px;font-weight:600;color:var(--blue);min-width:130px}
-.row input{flex:1;padding:7px 11px;border:2px solid #ddd;border-radius:6px;font-size:13px;font-family:monospace}
-.row input:focus{outline:none;border-color:var(--blue2)}
-.hint{font-size:11px;color:#888;margin-top:6px;line-height:1.5}
-.hint code{background:#f0f0f0;padding:1px 5px;border-radius:3px;font-size:11px}
-.btn{padding:7px 18px;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
-.btn-primary{background:var(--blue2);color:#fff}.btn-primary:hover{background:var(--blue)}
-.btn-primary:disabled{background:#aaa;cursor:not-allowed}
-.btn-success{background:#28a745;color:#fff}.btn-success:hover{background:#218838}
-.btn-orange{background:var(--orange);color:#fff;padding:9px 24px;font-size:14px}
-.btn-orange:hover{background:#a84a0e}.btn-orange:disabled{background:#aaa;cursor:not-allowed}
-.btn-sm{padding:5px 11px;font-size:12px}
-.drop-zone{border:3px dashed #ccc;border-radius:10px;padding:36px;text-align:center;cursor:pointer;transition:all .3s;background:var(--gray)}
-.drop-zone:hover,.drop-zone.drag{border-color:var(--blue2);background:var(--blue-bg)}
-.drop-zone .ico{font-size:36px;margin-bottom:8px}
-.drop-zone .txt{font-size:13px;color:#555}
+.row label{font-size:12px;font-weight:700;color:var(--blue);min-width:135px}
+.row input{flex:1;padding:8px 12px;border:2px solid #dde3f0;border-radius:7px;font-size:13px;font-family:monospace;transition:border .2s}
+.row input:focus{outline:none;border-color:var(--blue2);background:#f8fbff}
+.hint{font-size:11px;color:#888;margin-top:6px;line-height:1.6}
+.hint code{background:#eef2f9;padding:1px 5px;border-radius:3px;font-size:11px;color:var(--blue)}
+
+/* BUTTONS */
+.btn{padding:8px 18px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--blue2);color:#fff}.btn-primary:hover{background:var(--blue);transform:translateY(-1px)}
+.btn-primary:disabled{background:#b0bec5;cursor:not-allowed;transform:none}
+.btn-success{background:#1e7e34;color:#fff}.btn-success:hover{background:#155724;transform:translateY(-1px)}
+.btn-orange{background:var(--orange);color:#fff;padding:10px 28px;font-size:14px}
+.btn-orange:hover{background:#9c4600;transform:translateY(-1px)}
+.btn-orange:disabled{background:#b0bec5;cursor:not-allowed;transform:none}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-export{background:#5c3d99;color:#fff}.btn-export:hover{background:#3d2468}
+
+/* DROP ZONE */
+.drop-zone{border:3px dashed #c5d3e8;border-radius:12px;padding:34px;text-align:center;cursor:pointer;transition:all .3s;background:linear-gradient(135deg,#f8faff,#eef4ff)}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--blue2);background:var(--blue-bg);box-shadow:0 0 0 4px rgba(46,117,182,.1)}
+.drop-zone .ico{font-size:38px;margin-bottom:8px}
+.drop-zone .txt{font-size:14px;color:#555;font-weight:600}
 .drop-zone .sub{font-size:11px;color:#999;margin-top:4px}
-.file-chip{display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--blue-bg);border-radius:7px;margin-top:10px}
-.file-chip .nm{font-weight:600;font-size:13px}
-.file-chip .sz{font-size:11px;color:#666}
-#log{background:#1e1e1e;color:#ccc;font-family:Consolas,monospace;font-size:12px;padding:13px;border-radius:6px;max-height:220px;overflow-y:auto;line-height:1.7}
-#log .ok{color:#4ec9b0}#log .warn{color:#dcdcaa}#log .err{color:#f14c4c}#log .info{color:#569cd6}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
-.stat{text-align:center;padding:12px;border-radius:8px;background:var(--gray)}
-.stat .v{font-size:26px;font-weight:700;color:var(--blue)}
-.stat .l{font-size:11px;color:#666;margin-top:2px}
-.stat.g .v{color:var(--green)}.stat.r .v{color:var(--red)}
-.status{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:6px;font-size:13px;margin-top:8px}
-.status.ok{background:var(--green-bg);color:var(--green)}.status.err{background:var(--red-bg);color:var(--red)}
-.status.loading{background:#fff3cd;color:#856404}
-.hidden{display:none}
-.flex-gap{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.file-chip{display:flex;align-items:center;gap:10px;padding:10px 15px;background:linear-gradient(135deg,var(--blue-bg),#dde8f5);border-radius:8px;margin-top:10px;border-left:4px solid var(--blue2)}
+.file-chip .nm{font-weight:700;font-size:13px;color:var(--blue)}
+.file-chip .sz{font-size:11px;color:#666;margin-top:2px}
+
+/* LOG */
+#log{background:#0d1117;color:#c9d1d9;font-family:Consolas,monospace;font-size:12px;padding:14px;border-radius:8px;max-height:200px;overflow-y:auto;line-height:1.7;border:1px solid #30363d}
+#log .ok{color:#3fb950}#log .warn{color:#e3b341}#log .err{color:#f85149}#log .info{color:#58a6ff}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:14px 0}
+@media(max-width:700px){.stats{grid-template-columns:repeat(3,1fr)}}
+.stat{text-align:center;padding:14px 8px;border-radius:10px;background:var(--gray);border:1px solid #e0e8f5;transition:transform .2s}
+.stat:hover{transform:translateY(-2px)}
+.stat .v{font-size:28px;font-weight:800;color:var(--blue);line-height:1}
+.stat .l{font-size:10px;color:#777;margin-top:4px;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+.stat.g{background:var(--green-bg);border-color:#a8d5b5}.stat.g .v{color:var(--green)}
+.stat.r{background:var(--red-bg);border-color:#f5b7b7}.stat.r .v{color:var(--red)}
+.stat.o{background:var(--orange-bg);border-color:#f5c6a0}.stat.o .v{color:var(--orange)}
+
+/* STATUS */
+.status{display:flex;align-items:center;gap:8px;padding:9px 15px;border-radius:8px;font-size:13px;margin-top:10px;font-weight:600}
+.status.ok{background:var(--green-bg);color:var(--green);border:1px solid #a8d5b5}
+.status.err{background:var(--red-bg);color:var(--red);border:1px solid #f5b7b7}
+.status.loading{background:#fff8e1;color:#856404;border:1px solid #ffe082}
 
 /* TABLE */
-.tbl-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
-.tbl-toolbar input{padding:7px 12px;border:2px solid #ddd;border-radius:6px;font-size:13px;min-width:220px}
-.tbl-toolbar input:focus{outline:none;border-color:var(--blue2)}
-.tbl-toolbar select{padding:7px 12px;border:2px solid #ddd;border-radius:6px;font-size:13px;background:#fff}
-.tbl-toolbar select:focus{outline:none;border-color:var(--blue2)}
-.tbl-wrap{overflow-x:auto;border-radius:8px;border:1px solid #e0e0e0}
+.tbl-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.tbl-toolbar input,.tbl-toolbar select{padding:8px 12px;border:2px solid #dde3f0;border-radius:7px;font-size:13px;background:#fff;transition:border .2s}
+.tbl-toolbar input:focus,.tbl-toolbar select:focus{outline:none;border-color:var(--blue2)}
+.tbl-toolbar input{min-width:240px}
+
+.tbl-wrap{overflow-x:auto;border-radius:10px;border:2px solid var(--blue2);box-shadow:0 2px 8px rgba(31,56,100,.08)}
 table{width:100%;border-collapse:collapse;font-size:13px}
-thead th{background:var(--blue);color:#fff;padding:9px 12px;text-align:left;font-size:12px;font-weight:600;white-space:nowrap;position:sticky;top:0;cursor:pointer;user-select:none}
+
+thead tr{background:var(--blue)}
+thead th{color:#fff;padding:10px 13px;text-align:left;font-size:11px;font-weight:700;white-space:nowrap;position:sticky;top:0;z-index:1;cursor:pointer;letter-spacing:.4px;text-transform:uppercase;border-right:1px solid rgba(255,255,255,.15)}
 thead th:hover{background:var(--blue2)}
-thead th.sort-asc::after{content:' ▲'}
-thead th.sort-desc::after{content:' ▼'}
-tbody tr:nth-child(even){background:#f8f9ff}
-tbody tr:hover{background:var(--blue-bg)}
-tbody td{padding:7px 12px;border-bottom:1px solid #eee;white-space:nowrap;max-width:320px;overflow:hidden;text-overflow:ellipsis}
-.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
-.tag-si{background:var(--green-bg);color:var(--green)}.tag-no{background:var(--red-bg);color:var(--red)}
-.tbl-foot{padding:8px 12px;font-size:12px;color:#666;border-top:1px solid #eee;background:#f9f9f9;border-radius:0 0 8px 8px}
-a.pdf-link{color:var(--blue2);text-decoration:none;font-weight:600}
-a.pdf-link:hover{text-decoration:underline}
+thead th.sort-asc::after{content:' ▲';font-size:9px}
+thead th.sort-desc::after{content:' ▼';font-size:9px}
+thead th.col-forn{background:#a84a0e}
+thead th.col-drw{background:#155a8a}
+thead th.col-qty{background:#155a8a}
+
+tbody tr:nth-child(even){background:var(--blue-row)}
+tbody tr:hover{background:#d4e6f7;transition:background .1s}
+tbody td{padding:7px 13px;border-bottom:1px solid #e8eef7;white-space:nowrap;max-width:340px;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+tbody td.col-forn{background:rgba(197,90,17,.06);font-weight:600;color:var(--orange)}
+tbody tr:hover td.col-forn{background:rgba(197,90,17,.12)}
+tbody td.col-qty{font-weight:700;text-align:center;color:var(--blue);font-size:13px}
+tbody td.col-drw{text-align:center}
+tbody td.col-price{text-align:right;color:#444}
+tbody td.code{font-family:monospace;font-size:12px;font-weight:700}
+
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.tag-si{background:var(--green-bg);color:var(--green);border:1px solid #a8d5b5}
+.tag-no{background:var(--red-bg);color:var(--red);border:1px solid #f5b7b7}
+
+.tbl-foot{padding:9px 14px;font-size:12px;color:#555;border-top:2px solid var(--blue-bg);background:#f0f5fb;border-radius:0 0 10px 10px;display:flex;justify-content:space-between;align-items:center;font-weight:600}
+
+a.pdf-link{color:var(--blue2);text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:4px}
+a.pdf-link:hover{color:var(--blue);text-decoration:underline}
+
+/* EXPORT SECTION */
+.export-panel{background:linear-gradient(135deg,#f3f0ff,#ece6ff);border:2px solid #9b72d1;border-radius:10px;padding:16px;margin-top:14px}
+.export-panel h3{color:#5c3d99;font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.export-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.export-row select{padding:9px 14px;border:2px solid #c4a6ee;border-radius:7px;font-size:13px;background:#fff;min-width:220px;font-weight:600;color:#333}
+.export-row select:focus{outline:none;border-color:#7c4dcc}
+
 .download-row{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
+.hidden{display:none}
+.flex-gap{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.divider{height:1px;background:linear-gradient(90deg,transparent,#dde3f0,transparent);margin:14px 0}
 </style>
 </head>
 <body>
 
 <header>
+  <div class="logo">📋</div>
   <div>
-    <h1>📋 Distinta Dinamica CMV</h1>
-    <p>Verifica disegni PDF su Google Drive · Riepilogo automatico · Link diretti ai file</p>
+    <h1>Distinta Dinamica CMV</h1>
+    <p>Verifica disegni PDF su Google Drive · Riepilogo automatico · Link diretti ai file · Export per fornitore</p>
   </div>
 </header>
 
 <div class="container">
 
-<!-- STEP 1 -->
+<!-- STEP 1: CONFIG -->
 <div class="card">
   <div class="card-head"><span class="n">1</span> Configurazione Google Drive</div>
   <div class="card-body">
     <div class="row">
       <label>URL Apps Script:</label>
       <input id="scriptUrl" type="text" placeholder="https://script.google.com/macros/s/…/exec">
-      <button class="btn btn-sm btn-primary" onclick="saveConfig()">Salva</button>
+      <button class="btn btn-sm btn-primary" onclick="saveConfig()">💾 Salva</button>
     </div>
     <div class="row">
       <label>Cartella Drive:</label>
-      <input id="folderId" type="text" placeholder="URL completo o solo ID della cartella">
-      <button class="btn btn-sm btn-primary" onclick="testConn()">Connetti</button>
-    </div>
-    <div class="hint">
-      Incolla l'URL completo di Google Drive oppure solo l'ID.<br>
-      Esempio URL: <code>https://drive.google.com/drive/folders/<b>1d-ABToBITwsj68avWybrC3rOYcTqzeNd</b></code><br>
-      L'ID è la parte in grassetto dopo <code>/folders/</code> (taglia tutto ciò che viene dopo il <code>?</code>)
+      <input id="folderId" type="text" placeholder="Incolla URL completo o solo ID della cartella">
+      <button class="btn btn-sm btn-primary" onclick="testConn()">🔗 Connetti</button>
     </div>
     <div id="connStatus" class="hidden"></div>
+    <div class="hint">
+      Incolla l'URL completo oppure solo l'ID — entrambi funzionano.<br>
+      Esempio: <code>https://drive.google.com/drive/folders/<b>1d-ABToBITwsj68avWybrC3rOYcTqzeNd</b>?dmr=1</code><br>
+      L'ID viene estratto automaticamente (tutto ciò che viene dopo <code>?</code> viene ignorato).
+    </div>
   </div>
 </div>
 
-<!-- STEP 2 -->
+<!-- STEP 2: UPLOAD -->
 <div class="card">
   <div class="card-head"><span class="n">2</span> Carica la Distinta Excel</div>
   <div class="card-body">
     <div class="drop-zone" id="dropZone" onclick="document.getElementById('fi').click()">
-      <div class="ico">📄</div>
+      <div class="ico">📊</div>
       <div class="txt">Trascina qui il file Excel oppure clicca per selezionarlo</div>
-      <div class="sub">Formato supportato: .xlsx — Foglio richiesto: DISTINTA</div>
+      <div class="sub">Formato .xlsx — deve contenere il foglio <strong>DISTINTA</strong> con i dati dalla riga 5</div>
     </div>
     <input type="file" id="fi" accept=".xlsx,.xls" class="hidden">
     <div id="fileChip" class="hidden"></div>
   </div>
 </div>
 
-<!-- STEP 3 -->
+<!-- STEP 3: PROCESS -->
 <div class="card">
   <div class="card-head"><span class="n">3</span> Elabora e Scarica</div>
   <div class="card-body">
-    <button class="btn btn-orange" id="btnRun" onclick="run()" disabled>⚡ Aggiorna Distinta</button>
+    <div class="flex-gap">
+      <button class="btn btn-orange" id="btnRun" onclick="run()" disabled>⚡ Aggiorna Distinta</button>
+    </div>
+
     <div id="logBox" class="hidden" style="margin-top:14px"><div id="log"></div></div>
-    <div id="statsBox" class="hidden" style="margin-top:12px">
+
+    <div id="statsBox" class="hidden">
+      <div class="divider"></div>
       <div class="stats" id="stats"></div>
+
+      <!-- Download principale -->
       <div class="download-row">
-        <button class="btn btn-success" id="btnDl" onclick="download()">⬇️ Scarica Excel Aggiornato</button>
-        <span id="dlNote" style="font-size:12px;color:#666"></span>
+        <button class="btn btn-success" id="btnDl" onclick="downloadMain()">⬇️ Scarica Excel Aggiornato</button>
+        <span id="dlNote" style="font-size:11px;color:#666"></span>
+      </div>
+
+      <!-- Export per fornitore -->
+      <div class="export-panel">
+        <h3>📤 Export per Fornitore — file Excel separato</h3>
+        <div class="export-row">
+          <select id="selForn">
+            <option value="">— Seleziona fornitore CMV —</option>
+          </select>
+          <button class="btn btn-export" onclick="downloadExport()">⬇️ Scarica Export Fornitore</button>
+        </div>
+        <div class="hint" style="margin-top:8px">
+          Genera un file Excel separato con solo i componenti del fornitore selezionato, pronto per l'ordine.
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- TABLE -->
+<!-- STEP 4: TABLE -->
 <div class="card hidden" id="tableCard">
   <div class="card-head"><span class="n">4</span> Riepilogo Interattivo</div>
   <div class="card-body">
     <div class="tbl-toolbar">
-      <input id="srch" type="text" placeholder="🔍 Cerca codice o descrizione…" oninput="filterTable()">
+      <input id="srch" type="text" placeholder="🔍  Cerca codice o descrizione…" oninput="filterTable()">
       <select id="fltForn" onchange="filterTable()"><option value="">Tutti i fornitori</option></select>
       <select id="fltDrw" onchange="filterTable()">
-        <option value="">Tutti i disegni</option>
+        <option value="">✅❌ Tutti i disegni</option>
         <option value="SI">✅ Con disegno</option>
         <option value="NO">❌ Senza disegno</option>
       </select>
-      <button class="btn btn-sm btn-primary" onclick="resetFilters()">Reset</button>
+      <button class="btn btn-sm btn-primary" onclick="resetFilters()">↩ Reset</button>
     </div>
     <div class="tbl-wrap">
       <table id="tbl">
         <thead>
           <tr>
-            <th onclick="sortTable(0)">CODICE</th>
-            <th onclick="sortTable(1)">DESCRIZIONE</th>
-            <th onclick="sortTable(2)">FORNITORE CMV</th>
-            <th onclick="sortTable(3)" style="text-align:center">QTÀ UNIT.</th>
-            <th onclick="sortTable(4)" style="text-align:center">QTÀ TOTALE</th>
-            <th onclick="sortTable(5)" style="text-align:right">PREZZO €</th>
-            <th style="text-align:center">DISEGNO</th>
+            <th onclick="sortTable(0)">#</th>
+            <th onclick="sortTable(1)">Codice</th>
+            <th onclick="sortTable(2)">Descrizione</th>
+            <th class="col-forn" onclick="sortTable(3)">Fornitore CMV</th>
+            <th class="col-qty" onclick="sortTable(4)" style="text-align:center">Qtà Unit.</th>
+            <th class="col-qty" onclick="sortTable(5)" style="text-align:center">Qtà Totale</th>
+            <th class="col-qty" onclick="sortTable(6)" style="text-align:right">Prezzo €</th>
+            <th class="col-drw" style="text-align:center">Disegno</th>
           </tr>
         </thead>
         <tbody id="tblBody"></tbody>
       </table>
     </div>
-    <div class="tbl-foot" id="tblFoot"></div>
+    <div class="tbl-foot" id="tblFoot">
+      <span id="tblCount"></span>
+      <span id="tblTotals" style="color:var(--blue)"></span>
+    </div>
   </div>
 </div>
 
-</div><!-- /container -->
+</div>
 
 <script>
-// ─── STATE ────────────────────────────────────────────────
-let wb = null, filename = '', pdfFiles = [], processed = null;
-let tableData = [];  // {code, desc, forn, qty, qtyTot, price, pdfUrl}
-let sortCol = -1, sortDir = 1;
+// ─── STATE ───────────────────────────────────────────────
+let wb=null, filename='', pdfFiles=[], processed=null;
+let tableData=[];
+let _sortDir={};
 
-// ─── UTILS ────────────────────────────────────────────────
-function extractId(val) {
-  val = val.trim();
-  // Full URL like https://drive.google.com/drive/folders/1d-ABToBIT...?dmr=1
-  const m = val.match(/\/folders\/([a-zA-Z0-9_-]+)/);
-  if (m) return m[1];
-  // Already an ID (no slashes)
-  if (!val.includes('/') && !val.includes('?')) return val;
-  // URL with query string only
-  return val.split('?')[0].split('/').pop();
+// ─── UTILS ───────────────────────────────────────────────
+function extractId(v){
+  v=v.trim();
+  const m=v.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  if(m) return m[1];
+  return v.split('?')[0].split('/').pop();
 }
-
-function log(msg, type) {
-  const el = document.getElementById('log');
+function log(msg,type){
+  const el=document.getElementById('log');
   document.getElementById('logBox').classList.remove('hidden');
-  const d = document.createElement('div');
-  d.className = type||'';
-  d.textContent = '› ' + msg;
+  const d=document.createElement('div');
+  d.className=type||'';
+  d.textContent='› '+msg;
   el.appendChild(d);
-  el.scrollTop = el.scrollHeight;
+  el.scrollTop=el.scrollHeight;
 }
-
-function loadConfig() {
-  document.getElementById('scriptUrl').value = localStorage.getItem('cmv_script')||'';
-  document.getElementById('folderId').value = localStorage.getItem('cmv_folder')||'';
+function loadConfig(){
+  document.getElementById('scriptUrl').value=localStorage.getItem('cmv_script')||'';
+  document.getElementById('folderId').value=localStorage.getItem('cmv_folder')||'';
 }
-
-function saveConfig() {
-  localStorage.setItem('cmv_script', document.getElementById('scriptUrl').value.trim());
-  localStorage.setItem('cmv_folder', document.getElementById('folderId').value.trim());
-  log('Configurazione salvata ✓', 'ok');
+function saveConfig(){
+  localStorage.setItem('cmv_script',document.getElementById('scriptUrl').value.trim());
+  localStorage.setItem('cmv_folder',document.getElementById('folderId').value.trim());
+  log('Configurazione salvata ✓','ok');
 }
-
-function checkReady() {
-  document.getElementById('btnRun').disabled = !(wb && pdfFiles !== null);
+function checkReady(){
+  document.getElementById('btnRun').disabled=!wb;
 }
-
-// ─── CONNECTION ───────────────────────────────────────────
-async function testConn() {
-  const script = document.getElementById('scriptUrl').value.trim();
-  const raw = document.getElementById('folderId').value.trim();
-  const fid = extractId(raw);
-  const st = document.getElementById('connStatus');
-  st.className = 'status loading'; st.classList.remove('hidden');
-  st.innerHTML = '⏳ Connessione in corso…';
-
-  if (!script || !fid) {
-    st.className = 'status err'; st.textContent = '❌ Compila URL Apps Script e cartella Drive'; return;
-  }
-
-  // Show extracted ID
-  if (fid !== raw) {
-    document.getElementById('folderId').value = fid;
-    st.innerHTML = '⏳ ID estratto: <b>' + fid + '</b> — Connessione…';
-  }
-
-  try {
-    const r = await fetch(script + '?folderId=' + encodeURIComponent(fid));
-    const d = await r.json();
-    if (d.status === 'ok') {
-      pdfFiles = d.files || [];
-      st.className = 'status ok';
-      st.innerHTML = '✅ Connesso! Cartella: <b>' + d.folderName + '</b> — ' + d.fileCount + ' PDF trovati';
-      saveConfig();
-      checkReady();
+function cloneSheet(ws){
+  const out={};
+  Object.keys(ws).forEach(k=>{
+    if(['!ref','!cols','!rows','!merges','!links','!freeze','!autofilter'].includes(k)){
+      try{out[k]=JSON.parse(JSON.stringify(ws[k]))}catch(e){out[k]=ws[k]}
+    } else if(ws[k]&&typeof ws[k]==='object'){
+      out[k]=Object.assign({},ws[k]);
     } else {
-      st.className = 'status err';
-      st.innerHTML = '❌ Errore: ' + (d.message||'Sconosciuto');
+      out[k]=ws[k];
     }
-  } catch(e) {
-    st.className = 'status err';
-    st.innerHTML = '❌ Errore connessione: ' + e.message;
+  });
+  return out;
+}
+
+// ─── CONNECTION ──────────────────────────────────────────
+async function testConn(){
+  const script=document.getElementById('scriptUrl').value.trim();
+  const raw=document.getElementById('folderId').value.trim();
+  const fid=extractId(raw);
+  const st=document.getElementById('connStatus');
+  st.classList.remove('hidden');
+  st.className='status loading';
+  st.innerHTML='⏳ Connessione in corso…';
+  if(!script||!fid){st.className='status err';st.innerHTML='❌ Compila entrambi i campi';return;}
+  if(fid!==raw) document.getElementById('folderId').value=fid;
+  try{
+    const r=await fetch(script+'?folderId='+encodeURIComponent(fid));
+    const d=await r.json();
+    if(d.status==='ok'){
+      pdfFiles=d.files||[];
+      st.className='status ok';
+      st.innerHTML='✅ Connesso — Cartella: <b>'+d.folderName+'</b> &nbsp;|&nbsp; '+d.fileCount+' PDF trovati';
+      saveConfig(); checkReady();
+    } else {
+      st.className='status err';
+      st.innerHTML='❌ '+( d.message||'Errore sconosciuto');
+    }
+  }catch(e){
+    st.className='status err';
+    st.innerHTML='❌ Errore di rete: '+e.message;
   }
 }
 
-// ─── FILE UPLOAD ──────────────────────────────────────────
-const dz = document.getElementById('dropZone');
-dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
-dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
-dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); if(e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); });
-document.getElementById('fi').addEventListener('change', e => { if(e.target.files[0]) loadFile(e.target.files[0]); });
+// ─── FILE UPLOAD ─────────────────────────────────────────
+const dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0])});
+document.getElementById('fi').addEventListener('change',e=>{if(e.target.files[0])loadFile(e.target.files[0])});
 
-function loadFile(f) {
-  if (!f.name.match(/\.xlsx?$/i)) { alert('Seleziona un file .xlsx'); return; }
-  filename = f.name;
-  const chip = document.getElementById('fileChip');
+function loadFile(f){
+  if(!f.name.match(/\.xlsx?$/i)){alert('Seleziona un file .xlsx');return;}
+  filename=f.name;
+  const chip=document.getElementById('fileChip');
   chip.classList.remove('hidden');
-  chip.innerHTML = '<div class="file-chip"><span style="font-size:22px">📊</span><div><div class="nm">'+f.name+'</div><div class="sz">'+Math.round(f.size/1024)+' KB</div></div></div>';
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      wb = XLSX.read(new Uint8Array(e.target.result), { type:'array', cellStyles:true, cellDates:true });
-      log('File caricato: ' + f.name, 'ok');
+  chip.innerHTML='<div class="file-chip"><span style="font-size:24px">📊</span><div><div class="nm">'+f.name+'</div><div class="sz">'+Math.round(f.size/1024)+' KB</div></div></div>';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellStyles:true,cellDates:true});
+      log('File caricato: '+f.name+' ('+wb.SheetNames.length+' fogli)','ok');
       checkReady();
-    } catch(err) { log('Errore lettura: '+err.message,'err'); }
+    }catch(err){log('Errore lettura: '+err.message,'err');}
   };
   reader.readAsArrayBuffer(f);
 }
 
-// ─── MAIN PROCESS ─────────────────────────────────────────
-async function run() {
-  if (!wb) { alert('Carica prima un file Excel'); return; }
-
-  // Try connecting if needed
-  if (!pdfFiles || pdfFiles.length === 0) {
-    const script = document.getElementById('scriptUrl').value.trim();
-    const fid = extractId(document.getElementById('folderId').value.trim());
-    if (script && fid) await testConn();
+// ─── MAIN PROCESS ────────────────────────────────────────
+async function run(){
+  if(!wb){alert('Carica prima il file Excel');return;}
+  if(!pdfFiles||pdfFiles.length===0){
+    const sc=document.getElementById('scriptUrl').value.trim();
+    const fid=extractId(document.getElementById('folderId').value.trim());
+    if(sc&&fid) await testConn();
   }
-
-  document.getElementById('btnRun').disabled = true;
-  document.getElementById('log').innerHTML = '';
+  document.getElementById('btnRun').disabled=true;
+  document.getElementById('log').innerHTML='';
   document.getElementById('logBox').classList.remove('hidden');
   document.getElementById('statsBox').classList.add('hidden');
   document.getElementById('tableCard').classList.add('hidden');
 
-  try {
-    if (!wb.Sheets['DISTINTA']) {
-      log('Foglio DISTINTA non trovato! Fogli: ' + wb.SheetNames.join(', '), 'err');
+  try{
+    if(!wb.Sheets['DISTINTA']){
+      log('Foglio DISTINTA non trovato! Fogli presenti: '+wb.SheetNames.join(', '),'err');
       return;
     }
 
-    // --- BUILD PDF MAP ---
-    const pdfMap = {};
-    (pdfFiles||[]).forEach(f => {
-      const name = f.name;
-      let c = name.split('_')[0].toUpperCase();
-      if (c.startsWith('PDF_')) c = c.slice(4);
-      pdfMap[c] = f;
-      pdfMap[c.replace(/-/g,'')] = f;
+    // PDF MAP
+    const pdfMap={};
+    (pdfFiles||[]).forEach(f=>{
+      let c=f.name.split('_')[0].toUpperCase();
+      if(c.startsWith('PDF_')) c=c.slice(4);
+      pdfMap[c]=f;
+      pdfMap[c.replace(/-/g,'')]=f;
     });
-    log('PDF indicizzati: ' + (pdfFiles||[]).length, 'info');
+    log('PDF indicizzati: '+(pdfFiles||[]).length,'info');
 
-    // --- DEEP CLONE workbook sheets ---
-    const newWb = {
-      SheetNames: [],
-      Sheets: {}
-    };
+    // Clone workbook
+    const newWb={SheetNames:[],Sheets:{}};
+    wb.SheetNames.forEach(n=>{newWb.SheetNames.push(n);newWb.Sheets[n]=cloneSheet(wb.Sheets[n]);});
 
-    // Keep all original sheets
-    wb.SheetNames.forEach(n => {
-      newWb.SheetNames.push(n);
-      newWb.Sheets[n] = cloneSheet(wb.Sheets[n]);
-    });
+    const ws=newWb.Sheets['DISTINTA'];
+    const range=XLSX.utils.decode_range(ws['!ref']);
+    const mult=Number((ws['E2']||{}).v||1)||1;
+    log('Moltiplicatore: '+mult,'info');
 
-    const ws = newWb.Sheets['DISTINTA'];
-    const range = XLSX.utils.decode_range(ws['!ref']);
-    const multCell = ws['E2'];
-    const mult = multCell ? (Number(multCell.v)||1) : 1;
-    log('Moltiplicatore: ' + mult, 'info');
+    // PROCESS ROWS
+    let total=0,si=0,no=0;
+    const unique={},codeSeq=[],links=[];
 
-    // --- PROCESS DISTINTA ROWS ---
-    let total=0, si=0, no=0;
-    const unique = {};
-    const codeSeq = [];
-    const links = []; // for !links array
+    for(let r=4;r<=range.e.r;r++){
+      const dCell=ws[XLSX.utils.encode_cell({r,c:3})];
+      if(!dCell||!dCell.v||String(dCell.v).trim()==='') continue;
+      const code=String(dCell.v).trim();
+      const cu=code.toUpperCase();
+      const qty=Number((ws[XLSX.utils.encode_cell({r,c:5})]||{}).v||0);
+      const desc=String((ws[XLSX.utils.encode_cell({r,c:4})]||{}).v||'');
+      const forn=String((ws[XLSX.utils.encode_cell({r,c:12})]||{}).v||'');
+      const price=Number((ws[XLSX.utils.encode_cell({r,c:10})]||{}).v||0);
+      const pdf=pdfMap[cu]||pdfMap[cu.replace(/-/g,'')];
 
-    for (let r=4; r<=range.e.r; r++) {
-      const dCell = ws[XLSX.utils.encode_cell({r, c:3})];
-      if (!dCell || !dCell.v || String(dCell.v).trim()==='') continue;
-
-      const code = String(dCell.v).trim();
-      const cu = code.toUpperCase();
-      const qty = Number((ws[XLSX.utils.encode_cell({r,c:5})]||{}).v||0);
-      const desc = String((ws[XLSX.utils.encode_cell({r,c:4})]||{}).v||'');
-      const forn = String((ws[XLSX.utils.encode_cell({r,c:12})]||{}).v||'');
-      const price = Number((ws[XLSX.utils.encode_cell({r,c:10})]||{}).v||0);
-      const pdf = pdfMap[cu] || pdfMap[cu.replace(/-/g,'')];
-
-      // Col N — DISEGNI
-      const nRef = XLSX.utils.encode_cell({r, c:13});
-      ws[nRef] = { t:'s', v: pdf?'SI':'NO' };
-
-      // Col O — QTA TOTALE
-      const oRef = XLSX.utils.encode_cell({r, c:14});
-      ws[oRef] = { t:'n', v: qty*mult };
-
-      // Hyperlink on code cell (col D)
-      if (pdf) {
-        dCell.l = { Target: pdf.url, Tooltip: 'Apri disegno PDF' };
-        links.push({ ref: XLSX.utils.encode_cell({r, c:3}), l: { Target: pdf.url } });
+      // Col N
+      const nRef=XLSX.utils.encode_cell({r,c:13});
+      ws[nRef]={t:'s',v:pdf?'SI':'NO'};
+      // Col O
+      const oRef=XLSX.utils.encode_cell({r,c:14});
+      ws[oRef]={t:'n',v:qty*mult};
+      // Hyperlink su Col D
+      if(pdf){
+        dCell.l={Target:pdf.url,Tooltip:'Apri PDF su Drive'};
+        links.push({ref:XLSX.utils.encode_cell({r,c:3}),l:{Target:pdf.url}});
         si++;
       } else {
         delete dCell.l;
         no++;
       }
       total++;
-
-      if (!unique[code]) {
-        unique[code] = { desc, qty:0, qtyTot:0, forn, price, pdfUrl: pdf?pdf.url:null };
-        codeSeq.push(code);
-      }
-      unique[code].qty += qty;
-      unique[code].qtyTot += qty*mult;
-      if (forn && !unique[code].forn) unique[code].forn = forn;
+      if(!unique[code]){unique[code]={desc,qty:0,qtyTot:0,forn,price,pdfUrl:pdf?pdf.url:null};codeSeq.push(code);}
+      unique[code].qty+=qty;
+      unique[code].qtyTot+=qty*mult;
+      if(forn&&!unique[code].forn) unique[code].forn=forn;
     }
-
-    ws['!links'] = links;
-    log('Righe: '+total+' | SI: '+si+' | NO: '+no, si>0?'ok':'warn');
+    ws['!links']=links;
+    log('Righe: '+total+' | SI: '+si+' | NO: '+no,si>0?'ok':'warn');
 
     codeSeq.sort();
-    tableData = codeSeq.map(c => ({ code:c, ...unique[c] }));
+    tableData=codeSeq.map(c=>({code:c,...unique[c]}));
 
-    // --- REBUILD RIEPILOGO ---
-    const rRows = [
+    // RIEPILOGO
+    const rRows=[
       ['RIEPILOGO CODICI — Quantità Totali per Codice','','','','',''],
       ['Moltiplicatore: '+mult+'   |   Codici univoci: '+codeSeq.length,'','','','',''],
       ['','','','','',''],
       ['CODICE','DESCRIZIONE','FORNITORE CMV','QTÀ UNITARIA','QTÀ TOTALE','PREZZO €']
     ];
-
-    let sumU=0, sumT=0;
-    const riepLinks = [];
-    codeSeq.forEach((c,i) => {
-      const d = unique[c];
-      rRows.push([c, d.desc, d.forn||'', d.qty, d.qtyTot, d.price]);
-      sumU += d.qty; sumT += d.qtyTot;
-      if (d.pdfUrl) riepLinks.push({ ref: XLSX.utils.encode_cell({r:4+i,c:0}), l:{Target:d.pdfUrl} });
+    let sumU=0,sumT=0;
+    const riepLinks=[];
+    codeSeq.forEach((c,i)=>{
+      const d=unique[c];
+      rRows.push([c,d.desc,d.forn||'',d.qty,d.qtyTot,d.price]);
+      sumU+=d.qty;sumT+=d.qtyTot;
+      if(d.pdfUrl) riepLinks.push({ref:XLSX.utils.encode_cell({r:4+i,c:0}),l:{Target:d.pdfUrl}});
     });
     rRows.push(['TOTALE','','',sumU,sumT,'']);
+    const wsR=XLSX.utils.aoa_to_sheet(rRows);
+    wsR['!cols']=[{wch:22},{wch:46},{wch:22},{wch:13},{wch:13},{wch:13}];
+    wsR['!merges']=[{s:{r:0,c:0},e:{r:0,c:5}},{s:{r:1,c:0},e:{r:1,c:5}}];
+    wsR['!links']=riepLinks;
+    if(!newWb.SheetNames.includes('RIEPILOGO')) newWb.SheetNames.push('RIEPILOGO');
+    newWb.Sheets['RIEPILOGO']=wsR;
+    log('RIEPILOGO: '+codeSeq.length+' codici','ok');
 
-    const wsR = XLSX.utils.aoa_to_sheet(rRows);
-    wsR['!cols'] = [{wch:22},{wch:46},{wch:22},{wch:13},{wch:13},{wch:13}];
-    wsR['!merges'] = [
-      {s:{r:0,c:0},e:{r:0,c:5}},
-      {s:{r:1,c:0},e:{r:1,c:5}}
-    ];
-    wsR['!links'] = riepLinks;
+    // Rimuovi EXPORT CMV vecchio (lo facciamo come file separato)
+    const idx=newWb.SheetNames.indexOf('EXPORT CMV');
+    if(idx>-1){newWb.SheetNames.splice(idx,1);delete newWb.Sheets['EXPORT CMV'];}
 
-    // Ensure RIEPILOGO in workbook
-    if (!newWb.SheetNames.includes('RIEPILOGO')) newWb.SheetNames.push('RIEPILOGO');
-    newWb.Sheets['RIEPILOGO'] = wsR;
-    log('RIEPILOGO: '+codeSeq.length+' codici univoci', 'ok');
+    // Ordine fogli
+    const order=['DISTINTA','RIEPILOGO'];
+    newWb.SheetNames.forEach(s=>{if(!order.includes(s))order.push(s);});
+    newWb.SheetNames=order.filter(s=>newWb.Sheets[s]);
 
-    // --- REBUILD EXPORT CMV ---
-    const N = codeSeq.length;
-    const eRows = [
-      ['EXPORT ORDINE — Filtra per Fornitore CMV','','','','','',''],
-      ['FORNITORE DA FILTRARE:','','','','← Digita nella cella C2 del file Excel','',''],
-      ['','','','','','',''],
-      ['CODICE','DESCRIZIONE','FORNITORE CMV','QTÀ TOTALE','PREZZO €','NOTE','_helper']
-    ];
+    processed=newWb;
 
-    for (let i=0; i<N; i++) {
-      const rr = 5+i;   // 1-based Excel row in RIEPILOGO
-      eRows.push([
-        { f:`IFERROR(IF($C$2="","",INDEX(RIEPILOGO!$A$5:$A$${4+N},MATCH(ROW()-4,$G$5:$G$${4+N},0))),"")` },
-        { f:`IFERROR(IF($C$2="","",INDEX(RIEPILOGO!$B$5:$B$${4+N},MATCH(ROW()-4,$G$5:$G$${4+N},0))),"")` },
-        { f:`IFERROR(IF($C$2="","",INDEX(RIEPILOGO!$C$5:$C$${4+N},MATCH(ROW()-4,$G$5:$G$${4+N},0))),"")` },
-        { f:`IFERROR(IF($C$2="","",INDEX(RIEPILOGO!$E$5:$E$${4+N},MATCH(ROW()-4,$G$5:$G$${4+N},0))),"")` },
-        { f:`IFERROR(IF($C$2="","",INDEX(RIEPILOGO!$F$5:$F$${4+N},MATCH(ROW()-4,$G$5:$G$${4+N},0))),"")` },
-        '',
-        { f:`IF($C$2=""," ",IF(RIEPILOGO!C${rr}=$C$2,COUNTIF(RIEPILOGO!$C$5:$C$${rr},$C$2),""))` }
-      ]);
-    }
-
-    const wsE = XLSX.utils.aoa_to_sheet(eRows);
-    wsE['!cols'] = [{wch:22},{wch:46},{wch:22},{wch:14},{wch:13},{wch:22},{wch:8,hidden:true}];
-    wsE['!merges'] = [{s:{r:0,c:0},e:{r:0,c:6}}];
-
-    if (!newWb.SheetNames.includes('EXPORT CMV')) newWb.SheetNames.push('EXPORT CMV');
-    newWb.Sheets['EXPORT CMV'] = wsE;
-    log('EXPORT CMV: '+N+' righe formula', 'ok');
-
-    // Keep ISTRUZIONI if present
-    if (wb.Sheets['ISTRUZIONI'] && !newWb.SheetNames.includes('ISTRUZIONI')) {
-      newWb.SheetNames.push('ISTRUZIONI');
-      newWb.Sheets['ISTRUZIONI'] = wb.Sheets['ISTRUZIONI'];
-    }
-
-    // Reorder sheets
-    const order = ['DISTINTA','RIEPILOGO','EXPORT CMV'];
-    newWb.SheetNames.forEach(s => { if (!order.includes(s)) order.push(s); });
-    newWb.SheetNames = order.filter(s => newWb.Sheets[s]);
-
-    processed = newWb;
-
-    // Stats
-    document.getElementById('stats').innerHTML =
+    // STATS
+    document.getElementById('stats').innerHTML=
       `<div class="stat"><div class="v">${total}</div><div class="l">Righe Distinta</div></div>
-       <div class="stat g"><div class="v">${si}</div><div class="l">Disegni Trovati ✅</div></div>
-       <div class="stat r"><div class="v">${no}</div><div class="l">Disegni Mancanti ❌</div></div>
+       <div class="stat g"><div class="v">${si}</div><div class="l">Disegni trovati</div></div>
+       <div class="stat r"><div class="v">${no}</div><div class="l">Senza disegno</div></div>
        <div class="stat"><div class="v">${codeSeq.length}</div><div class="l">Codici Univoci</div></div>
-       <div class="stat"><div class="v">${(pdfFiles||[]).length}</div><div class="l">PDF su Drive</div></div>
+       <div class="stat o"><div class="v">${(pdfFiles||[]).length}</div><div class="l">PDF su Drive</div></div>
        <div class="stat"><div class="v">${mult}</div><div class="l">Moltiplicatore</div></div>`;
     document.getElementById('statsBox').classList.remove('hidden');
 
-    log('✅ ELABORAZIONE COMPLETATA!', 'ok');
+    // Popola dropdown fornitori
+    const forns=[...new Set(tableData.map(d=>d.forn).filter(Boolean))].sort();
+    const sel=document.getElementById('selForn');
+    sel.innerHTML='<option value="">— Seleziona fornitore CMV —</option>';
+    forns.forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=f;sel.appendChild(o);});
 
-    // Build table
+    // Popola anche il filtro tabella
+    const fltForn=document.getElementById('fltForn');
+    fltForn.innerHTML='<option value="">Tutti i fornitori</option>';
+    forns.forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=f;fltForn.appendChild(o);});
+
+    log('✅ ELABORAZIONE COMPLETATA!','ok');
     buildTable();
 
-  } catch(e) {
-    log('ERRORE: '+e.message, 'err');
+  }catch(e){
+    log('ERRORE: '+e.message,'err');
     console.error(e);
-  } finally {
-    document.getElementById('btnRun').disabled = false;
+  }finally{
+    document.getElementById('btnRun').disabled=false;
   }
 }
 
-// ─── CLONE SHEET ──────────────────────────────────────────
-function cloneSheet(ws) {
-  const out = {};
-  Object.keys(ws).forEach(k => {
-    if (k === '!ref' || k === '!cols' || k === '!rows' || k === '!merges' || k === '!links') {
-      out[k] = JSON.parse(JSON.stringify(ws[k]));
-    } else if (typeof ws[k] === 'object') {
-      out[k] = Object.assign({}, ws[k]);
-    } else {
-      out[k] = ws[k];
+// ─── DOWNLOAD PRINCIPALE ─────────────────────────────────
+function downloadMain(){
+  if(!processed) return;
+  const out=XLSX.write(processed,{bookType:'xlsx',type:'array',bookSST:false});
+  const blob=new Blob([out],{type:'application/octet-stream'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=filename.replace(/\.xlsx?$/i,'')+'_AGGIORNATO.xlsx';
+  a.click();URL.revokeObjectURL(url);
+  document.getElementById('dlNote').textContent='✓ Scaricato: '+a.download;
+  log('File principale scaricato: '+a.download,'ok');
+}
+
+// ─── EXPORT PER FORNITORE ────────────────────────────────
+function downloadExport(){
+  const forn=document.getElementById('selForn').value;
+  if(!forn){alert('Seleziona prima un fornitore');return;}
+  const rows=tableData.filter(d=>d.forn===forn);
+  if(!rows.length){alert('Nessun componente trovato per questo fornitore');return;}
+
+  const exWb=XLSX.utils.book_new();
+  const exData=[
+    ['ORDINE — '+forn,'','','','',''],
+    ['','','','','',''],
+    ['CODICE','DESCRIZIONE','QTÀ TOTALE','PREZZO UNIT. €','IMPORTO TOT. €','NOTE']
+  ];
+  let totImporto=0;
+  rows.forEach(r=>{
+    const imp=r.price?r.qtyTot*r.price:0;
+    totImporto+=imp;
+    exData.push([r.code,r.desc,r.qtyTot,r.price||'',imp||'','']);
+  });
+  exData.push(['TOTALE','',rows.reduce((s,r)=>s+r.qtyTot,0),'',totImporto,'']);
+
+  const wsEx=XLSX.utils.aoa_to_sheet(exData);
+  wsEx['!cols']=[{wch:22},{wch:46},{wch:13},{wch:14},{wch:14},{wch:22}];
+  wsEx['!merges']=[{s:{r:0,c:0},e:{r:0,c:5}}];
+
+  // Add links per i codici con PDF
+  const exLinks=[];
+  rows.forEach((r,i)=>{
+    if(r.pdfUrl){
+      const ref=XLSX.utils.encode_cell({r:3+i,c:0});
+      if(wsEx[ref]) wsEx[ref].l={Target:r.pdfUrl,Tooltip:'Apri PDF su Drive'};
+      exLinks.push({ref,l:{Target:r.pdfUrl}});
     }
   });
-  return out;
+  wsEx['!links']=exLinks;
+
+  const sheetName=forn.substring(0,31).replace(/[\\/?*[\]:]/g,'');
+  XLSX.utils.book_append_sheet(exWb,wsEx,sheetName);
+
+  const out=XLSX.write(exWb,{bookType:'xlsx',type:'array',bookSST:false});
+  const blob=new Blob([out],{type:'application/octet-stream'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='EXPORT_'+forn.replace(/\s+/g,'_').toUpperCase()+'.xlsx';
+  a.click();URL.revokeObjectURL(url);
+  log('Export fornitore scaricato: '+a.download,'ok');
 }
 
-// ─── DOWNLOAD ─────────────────────────────────────────────
-function download() {
-  if (!processed) return;
-  const out = XLSX.write(processed, { bookType:'xlsx', type:'array', bookSST:false });
-  const blob = new Blob([out], { type:'application/octet-stream' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename.replace(/\.xlsx?$/i,'') + '_AGGIORNATO.xlsx';
-  a.click();
-  URL.revokeObjectURL(url);
-  document.getElementById('dlNote').textContent = '✓ File scaricato — ' + a.download;
-  log('File scaricato: '+a.download, 'ok');
-}
-
-// ─── TABLE ────────────────────────────────────────────────
-function buildTable() {
-  // Populate fornitore filter
-  const sel = document.getElementById('fltForn');
-  sel.innerHTML = '<option value="">Tutti i fornitori</option>';
-  const forns = [...new Set(tableData.map(d=>d.forn).filter(Boolean))].sort();
-  forns.forEach(f => {
-    const o = document.createElement('option');
-    o.value = f; o.textContent = f; sel.appendChild(o);
-  });
-
+// ─── TABLE ───────────────────────────────────────────────
+function buildTable(){
   renderTable(tableData);
   document.getElementById('tableCard').classList.remove('hidden');
-  document.getElementById('tableCard').scrollIntoView({ behavior:'smooth', block:'start' });
+  setTimeout(()=>document.getElementById('tableCard').scrollIntoView({behavior:'smooth',block:'start'}),200);
 }
 
-function filterTable() {
-  const q = document.getElementById('srch').value.toLowerCase();
-  const f = document.getElementById('fltForn').value;
-  const d = document.getElementById('fltDrw').value;
-  let rows = tableData;
-  if (q) rows = rows.filter(r => r.code.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q));
-  if (f) rows = rows.filter(r => r.forn === f);
-  if (d) rows = rows.filter(r => (r.pdfUrl?'SI':'NO') === d);
+function filterTable(){
+  const q=document.getElementById('srch').value.toLowerCase();
+  const f=document.getElementById('fltForn').value;
+  const d=document.getElementById('fltDrw').value;
+  let rows=tableData;
+  if(q) rows=rows.filter(r=>r.code.toLowerCase().includes(q)||r.desc.toLowerCase().includes(q));
+  if(f) rows=rows.filter(r=>r.forn===f);
+  if(d) rows=rows.filter(r=>(r.pdfUrl?'SI':'NO')===d);
   renderTable(rows);
 }
 
-function resetFilters() {
+function resetFilters(){
   document.getElementById('srch').value='';
   document.getElementById('fltForn').value='';
   document.getElementById('fltDrw').value='';
   renderTable(tableData);
 }
 
-let _sortDir = {};
-function sortTable(col) {
-  _sortDir[col] = (_sortDir[col]===1) ? -1 : 1;
-  // Update headers
-  document.querySelectorAll('#tbl thead th').forEach((th,i) => {
-    th.className = i===col ? (_sortDir[col]===1?'sort-asc':'sort-desc') : '';
+function sortTable(col){
+  _sortDir[col]=(_sortDir[col]===1)?-1:1;
+  document.querySelectorAll('#tbl thead th').forEach((th,i)=>{
+    th.className=th.className.replace(/ ?sort-(asc|desc)/g,'');
+    if(i===col) th.className+=' '+(_sortDir[col]===1?'sort-asc':'sort-desc');
   });
-  const keys = ['code','desc','forn','qty','qtyTot','price'];
-  const k = keys[col];
-  tableData.sort((a,b) => {
-    const av = a[k]||0, bv = b[k]||0;
-    if (typeof av==='string') return _sortDir[col]*av.localeCompare(bv);
-    return _sortDir[col]*(av-bv);
+  const keys=[null,'code','desc','forn','qty','qtyTot','price'];
+  if(col===0){tableData.sort((a,b)=>_sortDir[col]*(tableData.indexOf(a)-tableData.indexOf(b)));filterTable();return;}
+  const k=keys[col];
+  tableData.sort((a,b)=>{
+    const av=a[k]||0,bv=b[k]||0;
+    return typeof av==='string'?_sortDir[col]*av.localeCompare(bv):_sortDir[col]*(av-bv);
   });
   filterTable();
 }
 
-function renderTable(rows) {
-  const tbody = document.getElementById('tblBody');
-  tbody.innerHTML = '';
-  rows.forEach(r => {
-    const tr = document.createElement('tr');
-    const hasPdf = !!r.pdfUrl;
-    const codeCell = hasPdf
-      ? `<a class="pdf-link" href="${r.pdfUrl}" target="_blank" title="Apri PDF su Drive">🔗 ${r.code}</a>`
-      : r.code;
-    const tag = hasPdf
-      ? '<span class="tag tag-si">✅ SI</span>'
-      : '<span class="tag tag-no">❌ NO</span>';
-    tr.innerHTML =
-      `<td>${codeCell}</td>
-       <td title="${r.desc}">${r.desc}</td>
-       <td>${r.forn||'—'}</td>
-       <td style="text-align:center;font-weight:600">${r.qty}</td>
-       <td style="text-align:center;font-weight:600">${r.qtyTot}</td>
-       <td style="text-align:right">${r.price?r.price.toFixed(2):''}</td>
-       <td style="text-align:center">${tag}</td>`;
+function renderTable(rows){
+  const tbody=document.getElementById('tblBody');
+  tbody.innerHTML='';
+  let sumQtyTot=0;
+  rows.forEach((r,i)=>{
+    const hasPdf=!!r.pdfUrl;
+    const tr=document.createElement('tr');
+    const codeHtml=hasPdf
+      ?`<a class="pdf-link" href="${r.pdfUrl}" target="_blank" title="Apri PDF">🔗 ${r.code}</a>`
+      :`<span style="color:#555">${r.code}</span>`;
+    const tag=hasPdf
+      ?'<span class="tag tag-si">✅ SI</span>'
+      :'<span class="tag tag-no">❌ NO</span>';
+    const priceHtml=r.price?'€&nbsp;'+r.price.toFixed(2):'';
+    tr.innerHTML=
+      `<td style="color:#999;font-size:11px;text-align:center">${i+1}</td>
+       <td class="code">${codeHtml}</td>
+       <td title="${r.desc}" style="max-width:300px">${r.desc}</td>
+       <td class="col-forn">${r.forn||'—'}</td>
+       <td class="col-qty">${r.qty}</td>
+       <td class="col-qty">${r.qtyTot}</td>
+       <td class="col-price">${priceHtml}</td>
+       <td class="col-drw">${tag}</td>`;
     tbody.appendChild(tr);
+    sumQtyTot+=r.qtyTot;
   });
-  document.getElementById('tblFoot').textContent =
-    rows.length + ' di ' + tableData.length + ' codici' +
-    (rows.length < tableData.length ? ' (filtrati)' : '');
+  document.getElementById('tblCount').textContent=rows.length+' di '+tableData.length+' codici'+(rows.length<tableData.length?' (filtrati)':'');
+  document.getElementById('tblTotals').textContent='Qtà totale: '+sumQtyTot;
 }
 
-// ─── INIT ─────────────────────────────────────────────────
+// ─── INIT ────────────────────────────────────────────────
 loadConfig();
 </script>
 </body>
