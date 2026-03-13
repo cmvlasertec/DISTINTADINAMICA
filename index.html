@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Distinta Dinamica CMV</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
 <style>
 :root {
   --blue:#1F3864; --blue2:#2E75B6; --blue-bg:#DEEAF1; --blue-row:#EBF3FB;
@@ -258,6 +259,9 @@ a.pdf-link:hover{color:var(--blue);text-decoration:underline}
 let wb=null, filename='', pdfFiles=[], processed=null;
 let tableData=[];
 let _sortDir={};
+let rawBytes=null;      // bytes originali per ExcelJS
+let rowResults=[];      // risultati per riga [{r, hasPdf, pdfUrl, qtyTot}]
+let procMult=1;         // moltiplicatore usato nell'elaborazione
 
 // ─── UTILS ───────────────────────────────────────────────
 function extractId(v){
@@ -346,6 +350,7 @@ function loadFile(f){
   const reader=new FileReader();
   reader.onload=e=>{
     try{
+      rawBytes=new Uint8Array(e.target.result).slice(0); // copia difensiva per ExcelJS
       wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellStyles:true,cellDates:true});
       log('File caricato: '+f.name+' ('+wb.SheetNames.length+' fogli)','ok');
       checkReady();
@@ -396,6 +401,8 @@ async function run(){
     const ws=newWb.Sheets['DISTINTA'];
     const range=XLSX.utils.decode_range(ws['!ref']);
     const mult=Number((ws['E2']||{}).v||1)||1;
+    procMult=mult;
+    rowResults=[];
     log('Moltiplicatore: '+mult,'info');
 
     // PROCESS ROWS
@@ -430,6 +437,7 @@ async function run(){
         no++;
       }
       total++;
+      rowResults.push({r, hasPdf:!!pdf, pdfUrl:pdf?pdf.url:null, qtyTot:qty*mult});
       if(!unique[code]){unique[code]={desc,qty:0,qtyTot:0,forn,price,pdfUrl:pdf?pdf.url:null,liv};codeSeq.push(code);}
       unique[code].qty+=qty;
       unique[code].qtyTot+=qty*mult;
@@ -505,18 +513,119 @@ async function run(){
   }
 }
 
-// ─── DOWNLOAD PRINCIPALE ─────────────────────────────────
-function downloadMain(){
-  if(!processed) return;
-  const out=XLSX.write(processed,{bookType:'xlsx',type:'array',bookSST:false,cellStyles:true});
-  const blob=new Blob([out],{type:'application/octet-stream'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download=filename.replace(/\.xlsx?$/i,'')+'_AGGIORNATO.xlsx';
-  a.click();URL.revokeObjectURL(url);
-  document.getElementById('dlNote').textContent='✓ Scaricato: '+a.download;
-  log('File principale scaricato: '+a.download,'ok');
+// ─── DOWNLOAD PRINCIPALE (ExcelJS — preserva stili originali) ───
+async function downloadMain(){
+  if(!rawBytes||!rowResults.length){log('Nessun dato elaborato','err');return;}
+  log('Preparazione download con stili originali…','info');
+
+  try{
+    const workbook=new ExcelJS.Workbook();
+    await workbook.xlsx.load(rawBytes.buffer.slice(0));
+
+    const ws=workbook.getWorksheet('DISTINTA');
+    if(!ws){log('Foglio DISTINTA non trovato','err');return;}
+
+    // Applica modifiche riga per riga (stili originali preservati)
+    rowResults.forEach(({r,hasPdf,pdfUrl,qtyTot})=>{
+      const exRow=r+1; // ExcelJS è 1-based
+      const row=ws.getRow(exRow);
+
+      // Col N (14) — DISEGNI SI/NO
+      row.getCell(14).value=hasPdf?'SI':'NO';
+
+      // Col O (15) — QTÀ TOTALE
+      row.getCell(15).value=qtyTot;
+
+      // Hyperlink su Col D (4)
+      if(hasPdf&&pdfUrl){
+        const cellD=row.getCell(4);
+        const orig=cellD.value;
+        let txt='';
+        if(typeof orig==='string') txt=orig;
+        else if(orig&&orig.richText) txt=orig.richText.map(r=>r.text).join('');
+        else if(orig&&orig.text) txt=orig.text;
+        else txt=String(orig||'');
+        cellD.value={text:txt,hyperlink:pdfUrl,tooltip:'Apri PDF su Drive'};
+      }
+      row.commit();
+    });
+
+    // ── RIEPILOGO ──
+    let wsR=workbook.getWorksheet('RIEPILOGO');
+    if(wsR) workbook.removeWorksheet(wsR.id);
+    wsR=workbook.addWorksheet('RIEPILOGO');
+
+    // Titolo
+    wsR.mergeCells('A1:F1');
+    const c1=wsR.getCell('A1');
+    c1.value='RIEPILOGO CODICI — Quantità Totali per Codice';
+    c1.font={bold:true,size:14,color:{argb:'FF1F3864'}};
+
+    wsR.mergeCells('A2:F2');
+    const c2=wsR.getCell('A2');
+    c2.value='Moltiplicatore: '+procMult+'   |   Codici univoci: '+tableData.length;
+    c2.font={italic:true,size:11,color:{argb:'FF666666'}};
+
+    // Intestazioni riga 4
+    const hdr=['CODICE','DESCRIZIONE','FORNITORE CMV','QTÀ UNITARIA','QTÀ TOTALE','PREZZO €'];
+    const hRow=wsR.getRow(4);
+    hdr.forEach((h,i)=>{
+      const c=hRow.getCell(i+1);
+      c.value=h;
+      c.font={bold:true,color:{argb:'FFFFFFFF'},size:11};
+      c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1F3864'}};
+      c.alignment={horizontal:'center',vertical:'middle'};
+      c.border={bottom:{style:'thin',color:{argb:'FF000000'}}};
+    });
+    hRow.commit();
+
+    // Dati
+    let sumU=0,sumT=0;
+    tableData.forEach((d,i)=>{
+      const row=wsR.getRow(5+i);
+      row.getCell(1).value=d.pdfUrl?{text:d.code,hyperlink:d.pdfUrl}:d.code;
+      row.getCell(1).font=d.pdfUrl?{color:{argb:'FF2E75B6'},underline:true}:{};
+      row.getCell(2).value=d.desc;
+      row.getCell(3).value=d.forn||'';
+      row.getCell(4).value=d.qty;row.getCell(4).alignment={horizontal:'center'};
+      row.getCell(5).value=d.qtyTot;row.getCell(5).alignment={horizontal:'center'};
+      row.getCell(6).value=d.price||'';row.getCell(6).numFmt='€ #,##0.00';
+      sumU+=d.qty;sumT+=d.qtyTot;
+      if(i%2===0){
+        for(let c=1;c<=6;c++) row.getCell(c).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEBF3FB'}};
+      }
+      row.commit();
+    });
+
+    // Riga totale
+    const tRow=wsR.getRow(5+tableData.length);
+    tRow.getCell(1).value='TOTALE';tRow.getCell(1).font={bold:true,size:12};
+    tRow.getCell(4).value=sumU;tRow.getCell(4).font={bold:true};tRow.getCell(4).alignment={horizontal:'center'};
+    tRow.getCell(5).value=sumT;tRow.getCell(5).font={bold:true};tRow.getCell(5).alignment={horizontal:'center'};
+    tRow.commit();
+
+    // Larghezze colonne
+    wsR.getColumn(1).width=22;wsR.getColumn(2).width=46;wsR.getColumn(3).width=22;
+    wsR.getColumn(4).width=14;wsR.getColumn(5).width=14;wsR.getColumn(6).width=14;
+
+    // Rimuovi EXPORT CMV se presente
+    const wsE=workbook.getWorksheet('EXPORT CMV');
+    if(wsE) workbook.removeWorksheet(wsE.id);
+
+    // Scrivi file
+    const buffer=await workbook.xlsx.writeBuffer();
+    const blob=new Blob([buffer],{type:'application/octet-stream'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=filename.replace(/\.xlsx?$/i,'')+'_AGGIORNATO.xlsx';
+    a.click();URL.revokeObjectURL(url);
+    document.getElementById('dlNote').textContent='✓ Scaricato: '+a.download;
+    log('File scaricato con stili originali: '+a.download,'ok');
+  }catch(e){
+    log('Errore download: '+e.message,'err');
+    console.error(e);
+  }
 }
 
 // ─── EXPORT CMV COMPLETO ─────────────────────────────────
