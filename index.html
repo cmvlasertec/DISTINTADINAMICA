@@ -406,6 +406,7 @@ async function run(){
       const desc=String((ws[XLSX.utils.encode_cell({r,c:4})]||{}).v||'');
       const forn=String((ws[XLSX.utils.encode_cell({r,c:12})]||{}).v||'');
       const price=Number((ws[XLSX.utils.encode_cell({r,c:10})]||{}).v||0);
+      const liv=String((ws[XLSX.utils.encode_cell({r,c:1})]||{}).v||'');
       const pdf=pdfMap[cu]||pdfMap[cu.replace(/-/g,'')];
 
       // Col N
@@ -424,7 +425,7 @@ async function run(){
         no++;
       }
       total++;
-      if(!unique[code]){unique[code]={desc,qty:0,qtyTot:0,forn,price,pdfUrl:pdf?pdf.url:null};codeSeq.push(code);}
+      if(!unique[code]){unique[code]={desc,qty:0,qtyTot:0,forn,price,pdfUrl:pdf?pdf.url:null,liv};codeSeq.push(code);}
       unique[code].qty+=qty;
       unique[code].qtyTot+=qty*mult;
       if(forn&&!unique[code].forn) unique[code].forn=forn;
@@ -521,10 +522,10 @@ function downloadExport(){
 
   // Intestazione con info
   const exData=[
-    ['EXPORT CMV','','','','','',''],
-    ['Codici univoci: '+tableData.length,'','','','','',''],
-    ['','','','','','',''],
-    ['POS','CODICE','DESCRIZIONE','UM','QTÀ TOTALE','FORNITORE CMV','DISEGNO']
+    ['EXPORT CMV','','','','','','',''],
+    ['Codici univoci: '+tableData.length,'','','','','','',''],
+    ['','','','','','','',''],
+    ['POS','LIV','CODICE','DESCRIZIONE','UM','QTÀ TOTALE','FORNITORE CMV','DISEGNO']
   ];
 
   const exLinks=[];
@@ -532,21 +533,21 @@ function downloadExport(){
 
   tableData.forEach((r,i)=>{
     const disegno=r.pdfUrl?'SI':'NO';
-    exData.push([i+1, r.code, r.desc, 'NR', r.qtyTot, r.forn||'', disegno]);
+    exData.push([i+1, r.liv||'', r.code, r.desc, 'NR', r.qtyTot, r.forn||'', disegno]);
     sumTot+=r.qtyTot;
-    // Hyperlink su colonna CODICE (col B = index 1)
+    // Hyperlink su colonna CODICE (col C = index 2)
     if(r.pdfUrl){
-      const ref=XLSX.utils.encode_cell({r:4+i,c:1});
+      const ref=XLSX.utils.encode_cell({r:4+i,c:2});
       exLinks.push({ref,l:{Target:r.pdfUrl,Tooltip:'Apri PDF su Drive'}});
     }
   });
 
   // Riga totale
-  exData.push(['','TOTALE','','',sumTot,'','']);
+  exData.push(['','','TOTALE','','',sumTot,'','']);
 
   const wsEx=XLSX.utils.aoa_to_sheet(exData);
-  wsEx['!cols']=[{wch:6},{wch:22},{wch:46},{wch:6},{wch:13},{wch:22},{wch:10}];
-  wsEx['!merges']=[{s:{r:0,c:0},e:{r:0,c:6}},{s:{r:1,c:0},e:{r:1,c:6}}];
+  wsEx['!cols']=[{wch:5},{wch:6},{wch:22},{wch:46},{wch:6},{wch:13},{wch:22},{wch:10}];
+  wsEx['!merges']=[{s:{r:0,c:0},e:{r:0,c:7}},{s:{r:1,c:0},e:{r:1,c:7}}];
 
   // Applica hyperlinks ai codici con PDF
   exLinks.forEach(lk=>{
