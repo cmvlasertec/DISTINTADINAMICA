@@ -384,8 +384,13 @@ async function run(){
     });
     log('PDF indicizzati: '+(pdfFiles||[]).length,'info');
 
-    // Clone workbook
+    // Clone workbook preservando stili, proprietà e metadati originali
     const newWb={SheetNames:[],Sheets:{}};
+    ['Props','Custprops','Workbook','SSF','Styles','vbaraw','bookType','bookVBA'].forEach(k=>{
+      if(wb[k]!==undefined){
+        try{newWb[k]=JSON.parse(JSON.stringify(wb[k]));}catch(e){newWb[k]=wb[k];}
+      }
+    });
     wb.SheetNames.forEach(n=>{newWb.SheetNames.push(n);newWb.Sheets[n]=cloneSheet(wb.Sheets[n]);});
 
     const ws=newWb.Sheets['DISTINTA'];
@@ -503,7 +508,7 @@ async function run(){
 // ─── DOWNLOAD PRINCIPALE ─────────────────────────────────
 function downloadMain(){
   if(!processed) return;
-  const out=XLSX.write(processed,{bookType:'xlsx',type:'array',bookSST:false});
+  const out=XLSX.write(processed,{bookType:'xlsx',type:'array',bookSST:false,cellStyles:true});
   const blob=new Blob([out],{type:'application/octet-stream'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
