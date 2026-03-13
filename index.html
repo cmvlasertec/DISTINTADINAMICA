@@ -199,17 +199,14 @@ a.pdf-link:hover{color:var(--blue);text-decoration:underline}
         <span id="dlNote" style="font-size:11px;color:#666"></span>
       </div>
 
-      <!-- Export per fornitore -->
+      <!-- Export CMV completo -->
       <div class="export-panel">
-        <h3>📤 Export per Fornitore — file Excel separato</h3>
+        <h3>📤 Export CMV — tutti i codici</h3>
         <div class="export-row">
-          <select id="selForn">
-            <option value="">— Seleziona fornitore CMV —</option>
-          </select>
-          <button class="btn btn-export" onclick="downloadExport()">⬇️ Scarica Export Fornitore</button>
+          <button class="btn btn-export" onclick="downloadExport()">⬇️ Scarica Export CMV</button>
         </div>
         <div class="hint" style="margin-top:8px">
-          Genera un file Excel separato con solo i componenti del fornitore selezionato, pronto per l'ordine.
+          Genera un file Excel con tutti i codici univoci: POS · CODICE · DESCRIZIONE · UM · QTÀ TOTALE · FORNITORE CMV · DISEGNO.
         </div>
       </div>
     </div>
@@ -483,13 +480,10 @@ async function run(){
        <div class="stat"><div class="v">${mult}</div><div class="l">Moltiplicatore</div></div>`;
     document.getElementById('statsBox').classList.remove('hidden');
 
-    // Popola dropdown fornitori
+    // Popola filtro tabella per fornitore
     const forns=[...new Set(tableData.map(d=>d.forn).filter(Boolean))].sort();
-    const sel=document.getElementById('selForn');
-    sel.innerHTML='<option value="">— Seleziona fornitore CMV —</option>';
-    forns.forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=f;sel.appendChild(o);});
 
-    // Popola anche il filtro tabella
+    // Popola il filtro tabella
     const fltForn=document.getElementById('fltForn');
     fltForn.innerHTML='<option value="">Tutti i fornitori</option>';
     forns.forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=f;fltForn.appendChild(o);});
@@ -519,53 +513,58 @@ function downloadMain(){
   log('File principale scaricato: '+a.download,'ok');
 }
 
-// ─── EXPORT PER FORNITORE ────────────────────────────────
+// ─── EXPORT CMV COMPLETO ─────────────────────────────────
 function downloadExport(){
-  const forn=document.getElementById('selForn').value;
-  if(!forn){alert('Seleziona prima un fornitore');return;}
-  const rows=tableData.filter(d=>d.forn===forn);
-  if(!rows.length){alert('Nessun componente trovato per questo fornitore');return;}
+  if(!tableData||!tableData.length){alert('Elabora prima la distinta');return;}
 
   const exWb=XLSX.utils.book_new();
+
+  // Intestazione con info
   const exData=[
-    ['ORDINE — '+forn,'','','','',''],
-    ['','','','','',''],
-    ['CODICE','DESCRIZIONE','QTÀ TOTALE','PREZZO UNIT. €','IMPORTO TOT. €','NOTE']
+    ['EXPORT CMV','','','','','',''],
+    ['Codici univoci: '+tableData.length,'','','','','',''],
+    ['','','','','','',''],
+    ['POS','CODICE','DESCRIZIONE','UM','QTÀ TOTALE','FORNITORE CMV','DISEGNO']
   ];
-  let totImporto=0;
-  rows.forEach(r=>{
-    const imp=r.price?r.qtyTot*r.price:0;
-    totImporto+=imp;
-    exData.push([r.code,r.desc,r.qtyTot,r.price||'',imp||'','']);
+
+  const exLinks=[];
+  let sumTot=0;
+
+  tableData.forEach((r,i)=>{
+    const disegno=r.pdfUrl?'SI':'NO';
+    exData.push([i+1, r.code, r.desc, 'NR', r.qtyTot, r.forn||'', disegno]);
+    sumTot+=r.qtyTot;
+    // Hyperlink su colonna CODICE (col B = index 1)
+    if(r.pdfUrl){
+      const ref=XLSX.utils.encode_cell({r:4+i,c:1});
+      exLinks.push({ref,l:{Target:r.pdfUrl,Tooltip:'Apri PDF su Drive'}});
+    }
   });
-  exData.push(['TOTALE','',rows.reduce((s,r)=>s+r.qtyTot,0),'',totImporto,'']);
+
+  // Riga totale
+  exData.push(['','TOTALE','','',sumTot,'','']);
 
   const wsEx=XLSX.utils.aoa_to_sheet(exData);
-  wsEx['!cols']=[{wch:22},{wch:46},{wch:13},{wch:14},{wch:14},{wch:22}];
-  wsEx['!merges']=[{s:{r:0,c:0},e:{r:0,c:5}}];
+  wsEx['!cols']=[{wch:6},{wch:22},{wch:46},{wch:6},{wch:13},{wch:22},{wch:10}];
+  wsEx['!merges']=[{s:{r:0,c:0},e:{r:0,c:6}},{s:{r:1,c:0},e:{r:1,c:6}}];
 
-  // Add links per i codici con PDF
-  const exLinks=[];
-  rows.forEach((r,i)=>{
-    if(r.pdfUrl){
-      const ref=XLSX.utils.encode_cell({r:3+i,c:0});
-      if(wsEx[ref]) wsEx[ref].l={Target:r.pdfUrl,Tooltip:'Apri PDF su Drive'};
-      exLinks.push({ref,l:{Target:r.pdfUrl}});
-    }
+  // Applica hyperlinks ai codici con PDF
+  exLinks.forEach(lk=>{
+    if(wsEx[lk.ref]) wsEx[lk.ref].l=lk.l;
   });
   wsEx['!links']=exLinks;
 
-  const sheetName=forn.substring(0,31).replace(/[\\/?*[\]:]/g,'');
-  XLSX.utils.book_append_sheet(exWb,wsEx,sheetName);
+  XLSX.utils.book_append_sheet(exWb,wsEx,'EXPORT CMV');
 
   const out=XLSX.write(exWb,{bookType:'xlsx',type:'array',bookSST:false});
   const blob=new Blob([out],{type:'application/octet-stream'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url;
-  a.download='EXPORT_'+forn.replace(/\s+/g,'_').toUpperCase()+'.xlsx';
+  const baseName=filename.replace(/\.xlsx?$/i,'')||'DISTINTA';
+  a.download='EXPORT_CMV_'+baseName+'.xlsx';
   a.click();URL.revokeObjectURL(url);
-  log('Export fornitore scaricato: '+a.download,'ok');
+  log('Export CMV scaricato: '+a.download,'ok');
 }
 
 // ─── TABLE ───────────────────────────────────────────────
