@@ -6,6 +6,7 @@
 <title>Distinta Dinamica CMV</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 :root {
   --blue:#1F3864; --blue2:#2E75B6; --blue-bg:#DEEAF1; --blue-row:#EBF3FB;
@@ -513,14 +514,38 @@ async function run(){
   }
 }
 
-// ─── DOWNLOAD PRINCIPALE (ExcelJS — preserva stili originali) ───
+// ─── DOWNLOAD PRINCIPALE (JSZip+ExcelJS — preserva stili originali) ───
 async function downloadMain(){
   if(!rawBytes||!rowResults.length){log('Nessun dato elaborato','err');return;}
   log('Preparazione download con stili originali…','info');
 
   try{
+    // ── STEP 1: Pre-process con JSZip per rimuovere shared formulas ──
+    log('Fix shared formulas…','info');
+    const zip=await JSZip.loadAsync(rawBytes);
+    for(const path of Object.keys(zip.files)){
+      if(!/xl\/worksheets\/sheet\d+\.xml$/i.test(path)) continue;
+      let xml=await zip.files[path].async('string');
+      if(!xml.includes('t="shared"')) continue;
+      // Rimuovi formula slaves (self-closing <f.../> con t="shared")
+      xml=xml.replace(/<f[^>]*\bt="shared"[^>]*\/>/g,'');
+      // Converti formula masters in formule normali (rimuovi attributi shared)
+      xml=xml.replace(/<f\b([^>]*)>/g,(match,attrs)=>{
+        if(!attrs.includes('t="shared"')) return match;
+        attrs=attrs.replace(/\bt="shared"/g,'');
+        attrs=attrs.replace(/\bref="[^"]*"/g,'');
+        attrs=attrs.replace(/\bsi="\d+"/g,'');
+        attrs=attrs.trim();
+        return attrs?'<f '+attrs+'>':'<f>';
+      });
+      zip.file(path,xml);
+    }
+    const fixedBuf=await zip.generateAsync({type:'arraybuffer'});
+    log('Shared formulas risolte ✓','ok');
+
+    // ── STEP 2: Carica in ExcelJS (ora senza errori) ──
     const workbook=new ExcelJS.Workbook();
-    await workbook.xlsx.load(rawBytes.buffer.slice(0));
+    await workbook.xlsx.load(fixedBuf);
 
     const ws=workbook.getWorksheet('DISTINTA');
     if(!ws){log('Foglio DISTINTA non trovato','err');return;}
@@ -542,8 +567,9 @@ async function downloadMain(){
         const orig=cellD.value;
         let txt='';
         if(typeof orig==='string') txt=orig;
-        else if(orig&&orig.richText) txt=orig.richText.map(r=>r.text).join('');
-        else if(orig&&orig.text) txt=orig.text;
+        else if(orig&&typeof orig==='object'&&orig.richText) txt=orig.richText.map(x=>x.text).join('');
+        else if(orig&&typeof orig==='object'&&orig.text) txt=orig.text;
+        else if(orig&&typeof orig==='object'&&orig.result) txt=String(orig.result);
         else txt=String(orig||'');
         cellD.value={text:txt,hyperlink:pdfUrl,tooltip:'Apri PDF su Drive'};
       }
@@ -555,7 +581,6 @@ async function downloadMain(){
     if(wsR) workbook.removeWorksheet(wsR.id);
     wsR=workbook.addWorksheet('RIEPILOGO');
 
-    // Titolo
     wsR.mergeCells('A1:F1');
     const c1=wsR.getCell('A1');
     c1.value='RIEPILOGO CODICI — Quantità Totali per Codice';
@@ -566,7 +591,6 @@ async function downloadMain(){
     c2.value='Moltiplicatore: '+procMult+'   |   Codici univoci: '+tableData.length;
     c2.font={italic:true,size:11,color:{argb:'FF666666'}};
 
-    // Intestazioni riga 4
     const hdr=['CODICE','DESCRIZIONE','FORNITORE CMV','QTÀ UNITARIA','QTÀ TOTALE','PREZZO €'];
     const hRow=wsR.getRow(4);
     hdr.forEach((h,i)=>{
@@ -579,7 +603,6 @@ async function downloadMain(){
     });
     hRow.commit();
 
-    // Dati
     let sumU=0,sumT=0;
     tableData.forEach((d,i)=>{
       const row=wsR.getRow(5+i);
@@ -597,14 +620,12 @@ async function downloadMain(){
       row.commit();
     });
 
-    // Riga totale
     const tRow=wsR.getRow(5+tableData.length);
     tRow.getCell(1).value='TOTALE';tRow.getCell(1).font={bold:true,size:12};
     tRow.getCell(4).value=sumU;tRow.getCell(4).font={bold:true};tRow.getCell(4).alignment={horizontal:'center'};
     tRow.getCell(5).value=sumT;tRow.getCell(5).font={bold:true};tRow.getCell(5).alignment={horizontal:'center'};
     tRow.commit();
 
-    // Larghezze colonne
     wsR.getColumn(1).width=22;wsR.getColumn(2).width=46;wsR.getColumn(3).width=22;
     wsR.getColumn(4).width=14;wsR.getColumn(5).width=14;wsR.getColumn(6).width=14;
 
@@ -612,7 +633,7 @@ async function downloadMain(){
     const wsE=workbook.getWorksheet('EXPORT CMV');
     if(wsE) workbook.removeWorksheet(wsE.id);
 
-    // Scrivi file
+    // ── STEP 3: Scrivi file ──
     const buffer=await workbook.xlsx.writeBuffer();
     const blob=new Blob([buffer],{type:'application/octet-stream'});
     const url=URL.createObjectURL(blob);
