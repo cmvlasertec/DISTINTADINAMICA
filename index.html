@@ -206,9 +206,11 @@ a.pdf-link:hover{color:var(--blue);text-decoration:underline}
         <h3>📤 Export CMV — tutti i codici</h3>
         <div class="export-row">
           <button class="btn btn-export" onclick="downloadExport()">⬇️ Scarica Export CMV</button>
+          <button class="btn btn-export" onclick="downloadExportByLiv2()" style="background:#2E75B6">⬇️ Export CMV diviso per Livello 2</button>
         </div>
         <div class="hint" style="margin-top:8px">
-          Genera un file Excel con tutti i codici univoci: POS · CODICE · DESCRIZIONE · UM · QTÀ TOTALE · FORNITORE CMV · DISEGNO.
+          <strong>Export CMV</strong> — file Excel con tutti i codici univoci.<br>
+          <strong>Export per Livello 2</strong> — uno ZIP con un file Excel per ogni sotto-assieme di livello 2.
         </div>
       </div>
     </div>
@@ -263,6 +265,7 @@ let _sortDir={};
 let rawBytes=null;      // bytes originali per ExcelJS
 let rowResults=[];      // risultati per riga [{r, hasPdf, pdfUrl, qtyTot}]
 let procMult=1;         // moltiplicatore usato nell'elaborazione
+let allRows=[];         // tutte le righe in ordine originale (per export per livello 2)
 
 // ─── UTILS ───────────────────────────────────────────────
 function extractId(v){
@@ -404,6 +407,7 @@ async function run(){
     const mult=Number((ws['E2']||{}).v||1)||1;
     procMult=mult;
     rowResults=[];
+    allRows=[];
     log('Moltiplicatore: '+mult,'info');
 
     // PROCESS ROWS
@@ -439,6 +443,7 @@ async function run(){
       }
       total++;
       rowResults.push({r, hasPdf:!!pdf, pdfUrl:pdf?pdf.url:null, qtyTot:qty*mult});
+      allRows.push({code,desc,qty,qtyTot:qty*mult,forn,price,liv,pdfUrl:pdf?pdf.url:null});
       if(!unique[code]){unique[code]={desc,qty:0,qtyTot:0,forn,price,pdfUrl:pdf?pdf.url:null,liv};codeSeq.push(code);}
       unique[code].qty+=qty;
       unique[code].qtyTot+=qty*mult;
@@ -701,6 +706,89 @@ function downloadExport(){
   a.download='EXPORT_CMV_'+baseName+'.xlsx';
   a.click();URL.revokeObjectURL(url);
   log('Export CMV scaricato: '+a.download,'ok');
+}
+
+// ─── EXPORT CMV DIVISO PER LIVELLO 2 ────────────────────
+async function downloadExportByLiv2(){
+  if(!allRows||!allRows.length){alert('Elabora prima la distinta');return;}
+
+  // Raggruppa righe per livello 2: ogni riga con liv=2 apre un nuovo gruppo
+  const groups=[];
+  let cur=null;
+  allRows.forEach(row=>{
+    const livNum=parseFloat(row.liv);
+    if(livNum===2||String(row.liv).trim()==='2'){
+      cur={code:row.code, desc:row.desc, rows:[row]};
+      groups.push(cur);
+    } else if(cur){
+      cur.rows.push(row);
+    }
+    // righe prima del primo livello 2 vengono ignorate (liv 1 = assieme padre)
+  });
+
+  if(!groups.length){
+    alert('Nessun livello 2 trovato nella distinta');
+    return;
+  }
+
+  log('Livelli 2 trovati: '+groups.length+' sotto-assiemi','info');
+
+  // Crea uno ZIP con un file Excel per ogni gruppo
+  const zip=new JSZip();
+
+  groups.forEach((g,gi)=>{
+    const exWb=XLSX.utils.book_new();
+    const exData=[
+      [g.code+' — '+g.desc,'','','','','','',''],
+      ['Componenti: '+g.rows.length,'','','','','','',''],
+      ['','','','','','','',''],
+      ['POS','LIV','CODICE','DESCRIZIONE','UM','QTÀ TOTALE','FORNITORE CMV','DISEGNO']
+    ];
+
+    const exLinks=[];
+    let sumTot=0;
+
+    g.rows.forEach((r,i)=>{
+      const disegno=r.pdfUrl?'SI':'NO';
+      exData.push([i+1, r.liv||'', r.code, r.desc, 'NR', r.qtyTot, r.forn||'', disegno]);
+      sumTot+=r.qtyTot;
+      if(r.pdfUrl){
+        const ref=XLSX.utils.encode_cell({r:4+i,c:2});
+        exLinks.push({ref,l:{Target:r.pdfUrl,Tooltip:'Apri PDF su Drive'}});
+      }
+    });
+
+    exData.push(['','','TOTALE','','',sumTot,'','']);
+
+    const wsEx=XLSX.utils.aoa_to_sheet(exData);
+    wsEx['!cols']=[{wch:5},{wch:6},{wch:22},{wch:46},{wch:6},{wch:13},{wch:22},{wch:10}];
+    wsEx['!merges']=[{s:{r:0,c:0},e:{r:0,c:7}},{s:{r:1,c:0},e:{r:1,c:7}}];
+
+    exLinks.forEach(lk=>{
+      if(wsEx[lk.ref]) wsEx[lk.ref].l=lk.l;
+    });
+    wsEx['!links']=exLinks;
+
+    // Nome foglio = codice (max 31 char, senza caratteri vietati)
+    const sheetName=g.code.substring(0,31).replace(/[\\/?*[\]:]/g,'');
+    XLSX.utils.book_append_sheet(exWb,wsEx,sheetName);
+
+    const out=XLSX.write(exWb,{bookType:'xlsx',type:'array',bookSST:false});
+
+    // Nome file sicuro
+    const safeName=g.code.replace(/[\\/:*?"<>|]/g,'_');
+    zip.file(safeName+'.xlsx',out);
+  });
+
+  // Genera e scarica ZIP
+  const blob=await zip.generateAsync({type:'blob'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  const baseName=filename.replace(/\.xlsx?$/i,'')||'DISTINTA';
+  a.download='EXPORT_LIV2_'+baseName+'.zip';
+  a.click();URL.revokeObjectURL(url);
+  log('Export per Livello 2 scaricato: '+groups.length+' file in '+a.download,'ok');
 }
 
 // ─── TABLE ───────────────────────────────────────────────
