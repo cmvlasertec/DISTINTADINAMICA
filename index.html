@@ -716,8 +716,8 @@ async function downloadExportByLiv2(){
   const groups=[];
   let cur=null;
   allRows.forEach(row=>{
-    const livNum=parseFloat(row.liv);
-    if(livNum===2||String(row.liv).trim()==='2'){
+    const livClean=String(row.liv).replace(/\./g,'').trim();
+    if(livClean==='2'){
       cur={code:row.code, desc:row.desc, rows:[row]};
       groups.push(cur);
     } else if(cur){
