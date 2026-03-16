@@ -174,7 +174,7 @@ a.pdf-link:hover{color:var(--blue);text-decoration:underline}
     <div class="drop-zone" id="dropZone" onclick="document.getElementById('fi').click()">
       <div class="ico">📊</div>
       <div class="txt">Trascina qui il file Excel oppure clicca per selezionarlo</div>
-      <div class="sub">Formato .xlsx — deve contenere il foglio <strong>DISTINTA</strong> con i dati dalla riga 5</div>
+      <div class="sub">Formato .xlsx — il primo foglio verrà usato come distinta (dati dalla riga 5)</div>
     </div>
     <input type="file" id="fi" accept=".xlsx,.xls" class="hidden">
     <div id="fileChip" class="hidden"></div>
@@ -266,6 +266,7 @@ let rawBytes=null;      // bytes originali per ExcelJS
 let rowResults=[];      // risultati per riga [{r, hasPdf, pdfUrl, qtyTot}]
 let procMult=1;         // moltiplicatore usato nell'elaborazione
 let allRows=[];         // tutte le righe in ordine originale (per export per livello 2)
+let mainSheet='';       // nome del primo foglio (ex "DISTINTA")
 
 // ─── UTILS ───────────────────────────────────────────────
 function extractId(v){
@@ -378,10 +379,9 @@ async function run(){
   document.getElementById('tableCard').classList.add('hidden');
 
   try{
-    if(!wb.Sheets['DISTINTA']){
-      log('Foglio DISTINTA non trovato! Fogli presenti: '+wb.SheetNames.join(', '),'err');
-      return;
-    }
+    // Usa il primo foglio come foglio dati (qualunque sia il nome)
+    mainSheet=wb.SheetNames[0];
+    log('Foglio dati: '+mainSheet,'info');
 
     // PDF MAP
     const pdfMap={};
@@ -402,7 +402,7 @@ async function run(){
     });
     wb.SheetNames.forEach(n=>{newWb.SheetNames.push(n);newWb.Sheets[n]=cloneSheet(wb.Sheets[n]);});
 
-    const ws=newWb.Sheets['DISTINTA'];
+    const ws=newWb.Sheets[mainSheet];
     const range=XLSX.utils.decode_range(ws['!ref']);
     const mult=Number((ws['E2']||{}).v||1)||1;
     procMult=mult;
@@ -484,7 +484,7 @@ async function run(){
     if(idx>-1){newWb.SheetNames.splice(idx,1);delete newWb.Sheets['EXPORT CMV'];}
 
     // Ordine fogli
-    const order=['DISTINTA','RIEPILOGO'];
+    const order=[mainSheet,'RIEPILOGO'];
     newWb.SheetNames.forEach(s=>{if(!order.includes(s))order.push(s);});
     newWb.SheetNames=order.filter(s=>newWb.Sheets[s]);
 
@@ -552,8 +552,8 @@ async function downloadMain(){
     const workbook=new ExcelJS.Workbook();
     await workbook.xlsx.load(fixedBuf);
 
-    const ws=workbook.getWorksheet('DISTINTA');
-    if(!ws){log('Foglio DISTINTA non trovato','err');return;}
+    const ws=workbook.getWorksheet(mainSheet);
+    if(!ws){log('Foglio "'+mainSheet+'" non trovato','err');return;}
 
     // Applica modifiche riga per riga (stili originali preservati)
     rowResults.forEach(({r,hasPdf,pdfUrl,qtyTot})=>{
