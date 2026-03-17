@@ -426,12 +426,10 @@ async function run(){
       const liv=String((ws[XLSX.utils.encode_cell({r,c:1})]||{}).v||'');
       const pdf=pdfMap[cu]||pdfMap[cu.replace(/-/g,'')];
 
-      // Col N
+      // Col N — DISEGNO SI/NO
       const nRef=XLSX.utils.encode_cell({r,c:13});
       ws[nRef]={t:'s',v:pdf?'SI':'NO'};
-      // Col O
-      const oRef=XLSX.utils.encode_cell({r,c:14});
-      ws[oRef]={t:'n',v:qty*mult};
+      // Col O — FORNITORE CMV (vuota, compilabile dall'utente)
       // Hyperlink su Col D
       if(pdf){
         dCell.l={Target:pdf.url,Tooltip:'Apri PDF su Drive'};
@@ -555,16 +553,34 @@ async function downloadMain(){
     const ws=workbook.getWorksheet(mainSheet);
     if(!ws){log('Foglio "'+mainSheet+'" non trovato','err');return;}
 
+    // ── Aggiungi intestazioni per le colonne nuove (riga 4 = header) ──
+    const hdrRow=ws.getRow(4);
+    const hdrStyle={
+      font:{bold:true,color:{argb:'FFFFFFFF'},size:10},
+      fill:{type:'pattern',pattern:'solid',fgColor:{argb:'FF1F3864'}},
+      alignment:{horizontal:'center',vertical:'middle'}
+    };
+    // Col N (14) = DISEGNO
+    const hN=hdrRow.getCell(14);
+    hN.value='DISEGNO'; hN.font=hdrStyle.font; hN.fill=hdrStyle.fill; hN.alignment=hdrStyle.alignment;
+    // Col O (15) = FORNITORE CMV (vuota, compilabile dall'utente)
+    const hO=hdrRow.getCell(15);
+    hO.value='FORNITORE CMV'; hO.font=hdrStyle.font; hO.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFC55A11'}}; hO.alignment=hdrStyle.alignment;
+    hdrRow.commit();
+
     // Applica modifiche riga per riga (stili originali preservati)
+    let lastDataRow=4;
     rowResults.forEach(({r,hasPdf,pdfUrl,qtyTot})=>{
       const exRow=r+1; // ExcelJS è 1-based
       const row=ws.getRow(exRow);
+      if(exRow>lastDataRow) lastDataRow=exRow;
 
       // Col N (14) — DISEGNI SI/NO
       row.getCell(14).value=hasPdf?'SI':'NO';
+      row.getCell(14).alignment={horizontal:'center'};
 
-      // Col O (15) — QTÀ TOTALE
-      row.getCell(15).value=qtyTot;
+      // Col O (15) — FORNITORE CMV: lasciata vuota, l'utente la compila
+      // Non scrive nulla
 
       // Hyperlink su Col D (4)
       if(hasPdf&&pdfUrl){
@@ -581,7 +597,12 @@ async function downloadMain(){
       row.commit();
     });
 
-    // ── RIEPILOGO ──
+    // ── Imposta AutoFilter su tutte le colonne incluse N e O (A4:O ultima riga) ──
+    ws.autoFilter={from:{row:4,column:1},to:{row:lastDataRow,column:15}};
+
+    // ══════════════════════════════════════════════════════════
+    // ── FOGLIO 2: RIEPILOGO ──
+    // ══════════════════════════════════════════════════════════
     let wsR=workbook.getWorksheet('RIEPILOGO');
     if(wsR) workbook.removeWorksheet(wsR.id);
     wsR=workbook.addWorksheet('RIEPILOGO');
@@ -596,17 +617,17 @@ async function downloadMain(){
     c2.value='Moltiplicatore: '+procMult+'   |   Codici univoci: '+tableData.length;
     c2.font={italic:true,size:11,color:{argb:'FF666666'}};
 
-    const hdr=['CODICE','DESCRIZIONE','FORNITORE CMV','QTÀ UNITARIA','QTÀ TOTALE','PREZZO €'];
-    const hRow=wsR.getRow(4);
-    hdr.forEach((h,i)=>{
-      const c=hRow.getCell(i+1);
+    const riepHdr=['CODICE','DESCRIZIONE','FORNITORE CMV','QTÀ UNITARIA','QTÀ TOTALE','PREZZO €'];
+    const riepHRow=wsR.getRow(4);
+    riepHdr.forEach((h,i)=>{
+      const c=riepHRow.getCell(i+1);
       c.value=h;
       c.font={bold:true,color:{argb:'FFFFFFFF'},size:11};
       c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1F3864'}};
       c.alignment={horizontal:'center',vertical:'middle'};
       c.border={bottom:{style:'thin',color:{argb:'FF000000'}}};
     });
-    hRow.commit();
+    riepHRow.commit();
 
     let sumU=0,sumT=0;
     tableData.forEach((d,i)=>{
@@ -634,9 +655,67 @@ async function downloadMain(){
     wsR.getColumn(1).width=22;wsR.getColumn(2).width=46;wsR.getColumn(3).width=22;
     wsR.getColumn(4).width=14;wsR.getColumn(5).width=14;wsR.getColumn(6).width=14;
 
-    // Rimuovi EXPORT CMV se presente
-    const wsE=workbook.getWorksheet('EXPORT CMV');
+    // AutoFilter su RIEPILOGO (filtrabile per fornitore ecc.)
+    wsR.autoFilter={from:{row:4,column:1},to:{row:4+tableData.length,column:6}};
+
+    // ══════════════════════════════════════════════════════════
+    // ── FOGLIO 3: EXPORT CMV — riepilogo per quantità e fornitore ──
+    // ══════════════════════════════════════════════════════════
+    let wsE=workbook.getWorksheet('EXPORT CMV');
     if(wsE) workbook.removeWorksheet(wsE.id);
+    wsE=workbook.addWorksheet('EXPORT CMV');
+
+    wsE.mergeCells('A1:H1');
+    const eC1=wsE.getCell('A1');
+    eC1.value='EXPORT CMV — Tutti i codici';
+    eC1.font={bold:true,size:14,color:{argb:'FF1F3864'}};
+
+    wsE.mergeCells('A2:H2');
+    const eC2=wsE.getCell('A2');
+    eC2.value='Codici univoci: '+tableData.length+'   |   Moltiplicatore: '+procMult;
+    eC2.font={italic:true,size:11,color:{argb:'FF666666'}};
+
+    const expHdr=['POS','LIV','CODICE','DESCRIZIONE','UM','QTÀ TOTALE','FORNITORE CMV','DISEGNO'];
+    const expHRow=wsE.getRow(4);
+    expHdr.forEach((h,i)=>{
+      const c=expHRow.getCell(i+1);
+      c.value=h;
+      c.font={bold:true,color:{argb:'FFFFFFFF'},size:11};
+      c.fill={type:'pattern',pattern:'solid',fgColor:{argb:i===6?'FFC55A11':'FF1F3864'}};
+      c.alignment={horizontal:'center',vertical:'middle'};
+      c.border={bottom:{style:'thin',color:{argb:'FF000000'}}};
+    });
+    expHRow.commit();
+
+    let expSumTot=0;
+    tableData.forEach((d,i)=>{
+      const row=wsE.getRow(5+i);
+      row.getCell(1).value=i+1; row.getCell(1).alignment={horizontal:'center'};
+      row.getCell(2).value=d.liv||'';
+      row.getCell(3).value=d.pdfUrl?{text:d.code,hyperlink:d.pdfUrl}:d.code;
+      row.getCell(3).font=d.pdfUrl?{color:{argb:'FF2E75B6'},underline:true}:{bold:true};
+      row.getCell(4).value=d.desc;
+      row.getCell(5).value='NR'; row.getCell(5).alignment={horizontal:'center'};
+      row.getCell(6).value=d.qtyTot; row.getCell(6).alignment={horizontal:'center'};
+      row.getCell(7).value=d.forn||'';
+      row.getCell(8).value=d.pdfUrl?'SI':'NO'; row.getCell(8).alignment={horizontal:'center'};
+      expSumTot+=d.qtyTot;
+      if(i%2===0){
+        for(let c=1;c<=8;c++) row.getCell(c).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEBF3FB'}};
+      }
+      row.commit();
+    });
+
+    const expTRow=wsE.getRow(5+tableData.length);
+    expTRow.getCell(3).value='TOTALE'; expTRow.getCell(3).font={bold:true,size:12};
+    expTRow.getCell(6).value=expSumTot; expTRow.getCell(6).font={bold:true}; expTRow.getCell(6).alignment={horizontal:'center'};
+    expTRow.commit();
+
+    wsE.getColumn(1).width=6;wsE.getColumn(2).width=6;wsE.getColumn(3).width=22;wsE.getColumn(4).width=46;
+    wsE.getColumn(5).width=6;wsE.getColumn(6).width=14;wsE.getColumn(7).width=22;wsE.getColumn(8).width=10;
+
+    // AutoFilter su EXPORT CMV (filtrabile per fornitore, disegno, ecc.)
+    wsE.autoFilter={from:{row:4,column:1},to:{row:4+tableData.length,column:8}};
 
     // ── STEP 3: Scrivi file ──
     const buffer=await workbook.xlsx.writeBuffer();
