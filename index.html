@@ -174,7 +174,7 @@ a.pdf-link:hover{color:var(--blue);text-decoration:underline}
     <div class="drop-zone" id="dropZone" onclick="document.getElementById('fi').click()">
       <div class="ico">📊</div>
       <div class="txt">Trascina qui il file Excel oppure clicca per selezionarlo</div>
-      <div class="sub">Formato .xlsx — il primo foglio verrà usato come distinta (dati dalla riga 5)</div>
+      <div class="sub">Formato .xlsx — il primo foglio verrà usato come distinta (riga dati rilevata automaticamente dall'autofilter)</div>
     </div>
     <input type="file" id="fi" accept=".xlsx,.xls" class="hidden">
     <div id="fileChip" class="hidden"></div>
@@ -405,17 +405,30 @@ async function run(){
 
     const ws=newWb.Sheets[mainSheet];
     const range=XLSX.utils.decode_range(ws['!ref']);
-    const mult=Number((ws['E2']||{}).v||1)||1;
+
+    // ── Rileva la riga header dall'autofilter originale ──
+    let hdrRow0=0; // 0-based, default: riga 1 Excel
+    const af=ws['!autofilter'];
+    if(af){
+      if(af.ref){
+        const afRange=XLSX.utils.decode_range(af.ref);
+        hdrRow0=afRange.s.r;
+      }
+    }
+    const dataStartRow=hdrRow0+1; // i dati partono subito dopo l'header
+    log('Header rilevato: riga '+(hdrRow0+1)+' → dati dalla riga '+(dataStartRow+1),'info');
+
+    const mult=Number((ws[XLSX.utils.encode_cell({r:hdrRow0,c:4})]||ws['E2']||{}).v||1)||1;
     procMult=mult;
     rowResults=[];
     allRows=[];
     log('Moltiplicatore: '+mult,'info');
 
-    // PROCESS ROWS
+    // PROCESS ROWS — parte dalla prima riga dati (dopo l'header)
     let total=0,si=0,no=0;
     const unique={},codeSeq=[],links=[];
 
-    for(let r=4;r<=range.e.r;r++){
+    for(let r=dataStartRow;r<=range.e.r;r++){
       const dCell=ws[XLSX.utils.encode_cell({r,c:3})];
       if(!dCell||!dCell.v||String(dCell.v).trim()==='') continue;
       const code=String(dCell.v).trim();
