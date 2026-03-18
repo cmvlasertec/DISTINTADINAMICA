@@ -260,7 +260,8 @@ a.pdf-link:hover{color:var(--blue);text-decoration:underline}
 <script>
 // ─── STATE ───────────────────────────────────────────────
 let wb=null, filename='', pdfFiles=[], processed=null;
-let tableData=[];
+let tableData=[];        // codici univoci ordinati alfabeticamente (per tabella interattiva)
+let tableDataOrdered=[]; // codici univoci nell'ORDINE ORIGINALE della distinta (per export)
 let _sortDir={};
 let rawBytes=null;      // bytes originali per ExcelJS
 let rowResults=[];      // risultati per riga [{r, hasPdf, pdfUrl, qtyTot}]
@@ -450,6 +451,9 @@ async function run(){
     ws['!links']=links;
     log('Righe: '+total+' | SI: '+si+' | NO: '+no,si>0?'ok':'warn');
 
+    // Ordine originale della distinta (per export — mantiene livelli corretti)
+    tableDataOrdered=codeSeq.map(c=>({code:c,...unique[c]}));
+    // Ordine alfabetico solo per la tabella interattiva
     codeSeq.sort();
     tableData=codeSeq.map(c=>({code:c,...unique[c]}));
 
@@ -636,8 +640,9 @@ async function downloadMain(){
     // Nome foglio principale per le formule di collegamento
     const safeSheet=mainSheet.replace(/'/g,"''");
 
+    // RIEPILOGO e EXPORT usano tableDataOrdered (ordine originale distinta)
     let sumU=0,sumT=0;
-    tableData.forEach((d,i)=>{
+    tableDataOrdered.forEach((d,i)=>{
       const row=wsR.getRow(2+i);
       row.getCell(1).value=d.pdfUrl?{text:d.code,hyperlink:d.pdfUrl}:d.code;
       row.getCell(1).font=d.pdfUrl?{color:{argb:'FF2E75B6'},underline:true}:{};
@@ -654,7 +659,7 @@ async function downloadMain(){
       row.commit();
     });
 
-    const tRow=wsR.getRow(2+tableData.length);
+    const tRow=wsR.getRow(2+tableDataOrdered.length);
     tRow.getCell(1).value='TOTALE';tRow.getCell(1).font={bold:true,size:12};
     tRow.getCell(4).value=sumU;tRow.getCell(4).font={bold:true};tRow.getCell(4).alignment={horizontal:'center'};
     tRow.getCell(5).value=sumT;tRow.getCell(5).font={bold:true};tRow.getCell(5).alignment={horizontal:'center'};
@@ -664,10 +669,10 @@ async function downloadMain(){
     wsR.getColumn(4).width=14;wsR.getColumn(5).width=14;wsR.getColumn(6).width=14;
 
     // AutoFilter su RIEPILOGO dalla riga 1
-    wsR.autoFilter={from:{row:1,column:1},to:{row:1+tableData.length,column:6}};
+    wsR.autoFilter={from:{row:1,column:1},to:{row:1+tableDataOrdered.length,column:6}};
 
     // ══════════════════════════════════════════════════════════
-    // ── FOGLIO 3: EXPORT CMV — riepilogo per quantità e fornitore ──
+    // ── FOGLIO 3: EXPORT CMV — ordine originale distinta ──
     // ══════════════════════════════════════════════════════════
     let wsE=workbook.getWorksheet('EXPORT CMV');
     if(wsE) workbook.removeWorksheet(wsE.id);
@@ -687,7 +692,7 @@ async function downloadMain(){
     expHRow.commit();
 
     let expSumTot=0;
-    tableData.forEach((d,i)=>{
+    tableDataOrdered.forEach((d,i)=>{
       const row=wsE.getRow(2+i);
       row.getCell(1).value=i+1; row.getCell(1).alignment={horizontal:'center'};
       row.getCell(2).value=d.liv||'';
@@ -698,7 +703,7 @@ async function downloadMain(){
       row.getCell(6).value=d.qtyTot; row.getCell(6).alignment={horizontal:'center'};
       // FORNITORE CMV → formula collegata al foglio 1 colonna M
       row.getCell(7).value={formula:"IFERROR(INDEX('"+safeSheet+"'!M:M,MATCH(C"+(2+i)+",'"+safeSheet+"'!D:D,0)),\"\")"};
-      row.getCell(7).font={color:{argb:'FF0070C0'}}; // blu per indicare che è formula
+      row.getCell(7).font={color:{argb:'FF0070C0'}};
       row.getCell(8).value=d.pdfUrl?'SI':'NO'; row.getCell(8).alignment={horizontal:'center'};
       expSumTot+=d.qtyTot;
       if(i%2===0){
@@ -707,7 +712,7 @@ async function downloadMain(){
       row.commit();
     });
 
-    const expTRow=wsE.getRow(2+tableData.length);
+    const expTRow=wsE.getRow(2+tableDataOrdered.length);
     expTRow.getCell(3).value='TOTALE'; expTRow.getCell(3).font={bold:true,size:12};
     expTRow.getCell(6).value=expSumTot; expTRow.getCell(6).font={bold:true}; expTRow.getCell(6).alignment={horizontal:'center'};
     expTRow.commit();
@@ -716,7 +721,7 @@ async function downloadMain(){
     wsE.getColumn(5).width=6;wsE.getColumn(6).width=14;wsE.getColumn(7).width=22;wsE.getColumn(8).width=10;
 
     // AutoFilter su EXPORT CMV dalla riga 1
-    wsE.autoFilter={from:{row:1,column:1},to:{row:1+tableData.length,column:8}};
+    wsE.autoFilter={from:{row:1,column:1},to:{row:1+tableDataOrdered.length,column:8}};
 
     // ── STEP 3: Scrivi file ──
     const buffer=await workbook.xlsx.writeBuffer();
@@ -741,9 +746,10 @@ function downloadExport(){
   const exWb=XLSX.utils.book_new();
 
   // Intestazione con info
+  // Usa tableDataOrdered per preservare l'ordine originale della distinta
   const exData=[
     ['EXPORT CMV','','','','','','',''],
-    ['Codici univoci: '+tableData.length,'','','','','','',''],
+    ['Codici univoci: '+tableDataOrdered.length,'','','','','','',''],
     ['','','','','','','',''],
     ['POS','LIV','CODICE','DESCRIZIONE','UM','QTÀ TOTALE','FORNITORE CMV','DISEGNO']
   ];
@@ -751,7 +757,7 @@ function downloadExport(){
   const exLinks=[];
   let sumTot=0;
 
-  tableData.forEach((r,i)=>{
+  tableDataOrdered.forEach((r,i)=>{
     const disegno=r.pdfUrl?'SI':'NO';
     exData.push([i+1, r.liv||'', r.code, r.desc, 'NR', r.qtyTot, r.forn||'', disegno]);
     sumTot+=r.qtyTot;
@@ -797,13 +803,16 @@ async function downloadExportByLiv2(){
   let cur=null;
   allRows.forEach(row=>{
     const livClean=String(row.liv).replace(/\./g,'').trim();
+    // Livello 1 = assieme padre (root) → sempre escluso da qualsiasi gruppo
+    if(livClean==='1') return;
     if(livClean==='2'){
+      // Ogni livello 2 apre un nuovo sotto-gruppo
       cur={code:row.code, desc:row.desc, rows:[row]};
       groups.push(cur);
     } else if(cur){
+      // Livelli 3, 4, ... → componenti del sotto-gruppo corrente
       cur.rows.push(row);
     }
-    // righe prima del primo livello 2 vengono ignorate (liv 1 = assieme padre)
   });
 
   if(!groups.length){
