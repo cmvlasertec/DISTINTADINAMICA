@@ -633,13 +633,17 @@ async function downloadMain(){
     });
     riepHRow.commit();
 
+    // Nome foglio principale per le formule di collegamento
+    const safeSheet=mainSheet.replace(/'/g,"''");
+
     let sumU=0,sumT=0;
     tableData.forEach((d,i)=>{
       const row=wsR.getRow(2+i);
       row.getCell(1).value=d.pdfUrl?{text:d.code,hyperlink:d.pdfUrl}:d.code;
       row.getCell(1).font=d.pdfUrl?{color:{argb:'FF2E75B6'},underline:true}:{};
       row.getCell(2).value=d.desc;
-      row.getCell(3).value=d.forn||'';
+      // FORNITORE CMV → formula collegata al foglio 1 colonna M
+      row.getCell(3).value={formula:"IFERROR(INDEX('"+safeSheet+"'!M:M,MATCH(A"+(2+i)+",'"+safeSheet+"'!D:D,0)),\"\")"};
       row.getCell(4).value=d.qty;row.getCell(4).alignment={horizontal:'center'};
       row.getCell(5).value=d.qtyTot;row.getCell(5).alignment={horizontal:'center'};
       row.getCell(6).value=d.price||'';row.getCell(6).numFmt='€ #,##0.00';
@@ -692,7 +696,9 @@ async function downloadMain(){
       row.getCell(4).value=d.desc;
       row.getCell(5).value='NR'; row.getCell(5).alignment={horizontal:'center'};
       row.getCell(6).value=d.qtyTot; row.getCell(6).alignment={horizontal:'center'};
-      row.getCell(7).value=d.forn||'';
+      // FORNITORE CMV → formula collegata al foglio 1 colonna M
+      row.getCell(7).value={formula:"IFERROR(INDEX('"+safeSheet+"'!M:M,MATCH(C"+(2+i)+",'"+safeSheet+"'!D:D,0)),\"\")"};
+      row.getCell(7).font={color:{argb:'FF0070C0'}}; // blu per indicare che è formula
       row.getCell(8).value=d.pdfUrl?'SI':'NO'; row.getCell(8).alignment={horizontal:'center'};
       expSumTot+=d.qtyTot;
       if(i%2===0){
