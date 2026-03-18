@@ -440,10 +440,11 @@ async function run(){
       const liv=String((ws[XLSX.utils.encode_cell({r,c:1})]||{}).v||'');
       const pdf=pdfMap[cu]||pdfMap[cu.replace(/-/g,'')];
 
-      // Col N — DISEGNO SI/NO
-      const nRef=XLSX.utils.encode_cell({r,c:13});
-      ws[nRef]={t:'s',v:pdf?'SI':'NO'};
-      // Col O — FORNITORE CMV (vuota, compilabile dall'utente)
+      // Col M (12) — FORNITORE CMV: vuota, compilabile dall'utente (già presente o vuota)
+      // Col N (13) — PREZZO CMV: vuota, compilabile dall'utente
+      // Col O (14) — DISEGNO SI/NO
+      const oRef=XLSX.utils.encode_cell({r,c:14});
+      ws[oRef]={t:'s',v:pdf?'SI':'NO'};
       // Hyperlink su Col D
       if(pdf){
         dCell.l={Target:pdf.url,Tooltip:'Apri PDF su Drive'};
@@ -593,9 +594,12 @@ async function downloadMain(){
     // Col M (13) = FORNITORE CMV (vuota, compilabile)
     const hM=hdrRow.getCell(13);
     hM.value='FORNITORE CMV'; hM.font=hdrStyle.font; hM.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFC55A11'}}; hM.alignment=hdrStyle.alignment;
-    // Col N (14) = DISEGNO
+    // Col N (14) = PREZZO CMV (vuota, compilabile)
     const hN=hdrRow.getCell(14);
-    hN.value='DISEGNO'; hN.font=hdrStyle.font; hN.fill=hdrStyle.fill; hN.alignment=hdrStyle.alignment;
+    hN.value='PREZZO CMV'; hN.font=hdrStyle.font; hN.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFC55A11'}}; hN.alignment=hdrStyle.alignment;
+    // Col O (15) = DISEGNO
+    const hO=hdrRow.getCell(15);
+    hO.value='DISEGNO'; hO.font=hdrStyle.font; hO.fill=hdrStyle.fill; hO.alignment=hdrStyle.alignment;
     hdrRow.commit();
 
     // Applica modifiche riga per riga (stili originali preservati)
@@ -606,11 +610,11 @@ async function downloadMain(){
       if(exRow>lastDataRow) lastDataRow=exRow;
 
       // Col M (13) — FORNITORE CMV: lasciata vuota, l'utente la compila
-      // Non scrive nulla, solo la cella vuota con bordo per renderla visibile come parte della tabella
+      // Col N (14) — PREZZO CMV: lasciata vuota, l'utente la compila
 
-      // Col N (14) — DISEGNO SI/NO
-      row.getCell(14).value=hasPdf?'SI':'NO';
-      row.getCell(14).alignment={horizontal:'center'};
+      // Col O (15) — DISEGNO SI/NO
+      row.getCell(15).value=hasPdf?'SI':'NO';
+      row.getCell(15).alignment={horizontal:'center'};
 
       // Hyperlink su Col D (4)
       if(hasPdf&&pdfUrl){
@@ -627,8 +631,8 @@ async function downloadMain(){
       row.commit();
     });
 
-    // ── AutoFilter: estende l'originale fino a col N, dalla riga header corretta ──
-    ws.autoFilter={from:{row:hdrRowNum,column:1},to:{row:lastDataRow,column:14}};
+    // ── AutoFilter: estende l'originale fino a col O (15), dalla riga header corretta ──
+    ws.autoFilter={from:{row:hdrRowNum,column:1},to:{row:lastDataRow,column:15}};
 
     // ══════════════════════════════════════════════════════════
     // ── FOGLIO 2: RIEPILOGO ──
@@ -692,13 +696,14 @@ async function downloadMain(){
     wsE=workbook.addWorksheet('EXPORT CMV');
 
     // Header riga 1
-    const expHdr=['POS','LIV','CODICE','DESCRIZIONE','UM','QTÀ TOTALE','FORNITORE CMV','DISEGNO'];
+    const expHdr=['POS','LIV','CODICE','DESCRIZIONE','UM','QTÀ TOTALE','FORNITORE CMV','PREZZO CMV','DISEGNO'];
+    const orangeCols=[6,7]; // indici 0-based delle colonne arancioni (FORNITORE CMV, PREZZO CMV)
     const expHRow=wsE.getRow(1);
     expHdr.forEach((h,i)=>{
       const c=expHRow.getCell(i+1);
       c.value=h;
       c.font={bold:true,color:{argb:'FFFFFFFF'},size:11};
-      c.fill={type:'pattern',pattern:'solid',fgColor:{argb:i===6?'FFC55A11':'FF1F3864'}};
+      c.fill={type:'pattern',pattern:'solid',fgColor:{argb:orangeCols.includes(i)?'FFC55A11':'FF1F3864'}};
       c.alignment={horizontal:'center',vertical:'middle'};
       c.border={bottom:{style:'thin',color:{argb:'FF000000'}}};
     });
@@ -718,10 +723,15 @@ async function downloadMain(){
       // FORNITORE CMV → formula collegata al foglio 1 colonna M
       row.getCell(7).value={formula:"IFERROR(INDEX('"+safeSheet+"'!M:M,MATCH(C"+(2+i)+",'"+safeSheet+"'!D:D,0)),\"\")"};
       row.getCell(7).font={color:{argb:'FF0070C0'}};
-      row.getCell(8).value=d.pdfUrl?'SI':'NO'; row.getCell(8).alignment={horizontal:'center'};
+      // PREZZO CMV → formula collegata al foglio 1 colonna N
+      row.getCell(8).value={formula:"IFERROR(INDEX('"+safeSheet+"'!N:N,MATCH(C"+(2+i)+",'"+safeSheet+"'!D:D,0)),\"\")"};
+      row.getCell(8).font={color:{argb:'FF0070C0'}};
+      row.getCell(8).numFmt='€ #,##0.00';
+      // DISEGNO
+      row.getCell(9).value=d.pdfUrl?'SI':'NO'; row.getCell(9).alignment={horizontal:'center'};
       expSumTot+=d.qtyTot;
       if(i%2===0){
-        for(let c=1;c<=8;c++) row.getCell(c).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEBF3FB'}};
+        for(let c=1;c<=9;c++) row.getCell(c).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEBF3FB'}};
       }
       row.commit();
     });
@@ -732,10 +742,10 @@ async function downloadMain(){
     expTRow.commit();
 
     wsE.getColumn(1).width=6;wsE.getColumn(2).width=6;wsE.getColumn(3).width=22;wsE.getColumn(4).width=46;
-    wsE.getColumn(5).width=6;wsE.getColumn(6).width=14;wsE.getColumn(7).width=22;wsE.getColumn(8).width=10;
+    wsE.getColumn(5).width=6;wsE.getColumn(6).width=14;wsE.getColumn(7).width=22;wsE.getColumn(8).width=14;wsE.getColumn(9).width=10;
 
-    // AutoFilter su EXPORT CMV dalla riga 1
-    wsE.autoFilter={from:{row:1,column:1},to:{row:1+allRows.length,column:8}};
+    // AutoFilter su EXPORT CMV dalla riga 1 (9 colonne)
+    wsE.autoFilter={from:{row:1,column:1},to:{row:1+allRows.length,column:9}};
 
     // ── STEP 3: Scrivi file ──
     const buffer=await workbook.xlsx.writeBuffer();
@@ -763,10 +773,10 @@ function downloadExport(){
   // Usa allRows per preservare TUTTE le righe nell'ordine ESATTO della distinta originale
   // (inclusi duplicati e tutti i livelli: 1, 2, 3, 4, 5...)
   const exData=[
-    ['EXPORT CMV','','','','','','',''],
-    ['Righe totali: '+allRows.length,'','','','','','',''],
-    ['','','','','','','',''],
-    ['POS','LIV','CODICE','DESCRIZIONE','UM','QTÀ TOTALE','FORNITORE CMV','DISEGNO']
+    ['EXPORT CMV','','','','','','','',''],
+    ['Righe totali: '+allRows.length,'','','','','','','',''],
+    ['','','','','','','','',''],
+    ['POS','LIV','CODICE','DESCRIZIONE','UM','QTÀ TOTALE','FORNITORE CMV','PREZZO CMV','DISEGNO']
   ];
 
   const exLinks=[];
@@ -774,7 +784,7 @@ function downloadExport(){
 
   allRows.forEach((r,i)=>{
     const disegno=r.pdfUrl?'SI':'NO';
-    exData.push([i+1, r.liv||'', r.code, r.desc, 'NR', r.qtyTot, r.forn||'', disegno]);
+    exData.push([i+1, r.liv||'', r.code, r.desc, 'NR', r.qtyTot, r.forn||'', '', disegno]);
     sumTot+=r.qtyTot;
     // Hyperlink su colonna CODICE (col C = index 2)
     if(r.pdfUrl){
@@ -784,11 +794,11 @@ function downloadExport(){
   });
 
   // Riga totale
-  exData.push(['','','TOTALE','','',sumTot,'','']);
+  exData.push(['','','TOTALE','','',sumTot,'','','']);
 
   const wsEx=XLSX.utils.aoa_to_sheet(exData);
-  wsEx['!cols']=[{wch:5},{wch:6},{wch:22},{wch:46},{wch:6},{wch:13},{wch:22},{wch:10}];
-  wsEx['!merges']=[{s:{r:0,c:0},e:{r:0,c:7}},{s:{r:1,c:0},e:{r:1,c:7}}];
+  wsEx['!cols']=[{wch:5},{wch:6},{wch:22},{wch:46},{wch:6},{wch:13},{wch:22},{wch:14},{wch:10}];
+  wsEx['!merges']=[{s:{r:0,c:0},e:{r:0,c:8}},{s:{r:1,c:0},e:{r:1,c:8}}];
 
   // Applica hyperlinks ai codici con PDF
   exLinks.forEach(lk=>{
@@ -843,10 +853,10 @@ async function downloadExportByLiv2(){
   groups.forEach((g,gi)=>{
     const exWb=XLSX.utils.book_new();
     const exData=[
-      [g.code+' — '+g.desc,'','','','','','',''],
-      ['Componenti: '+g.rows.length,'','','','','','',''],
-      ['','','','','','','',''],
-      ['POS','LIV','CODICE','DESCRIZIONE','UM','QTÀ TOTALE','FORNITORE CMV','DISEGNO']
+      [g.code+' — '+g.desc,'','','','','','','',''],
+      ['Componenti: '+g.rows.length,'','','','','','','',''],
+      ['','','','','','','','',''],
+      ['POS','LIV','CODICE','DESCRIZIONE','UM','QTÀ TOTALE','FORNITORE CMV','PREZZO CMV','DISEGNO']
     ];
 
     const exLinks=[];
@@ -854,7 +864,7 @@ async function downloadExportByLiv2(){
 
     g.rows.forEach((r,i)=>{
       const disegno=r.pdfUrl?'SI':'NO';
-      exData.push([i+1, r.liv||'', r.code, r.desc, 'NR', r.qtyTot, r.forn||'', disegno]);
+      exData.push([i+1, r.liv||'', r.code, r.desc, 'NR', r.qtyTot, r.forn||'', '', disegno]);
       sumTot+=r.qtyTot;
       if(r.pdfUrl){
         const ref=XLSX.utils.encode_cell({r:4+i,c:2});
@@ -862,11 +872,11 @@ async function downloadExportByLiv2(){
       }
     });
 
-    exData.push(['','','TOTALE','','',sumTot,'','']);
+    exData.push(['','','TOTALE','','',sumTot,'','','']);
 
     const wsEx=XLSX.utils.aoa_to_sheet(exData);
-    wsEx['!cols']=[{wch:5},{wch:6},{wch:22},{wch:46},{wch:6},{wch:13},{wch:22},{wch:10}];
-    wsEx['!merges']=[{s:{r:0,c:0},e:{r:0,c:7}},{s:{r:1,c:0},e:{r:1,c:7}}];
+    wsEx['!cols']=[{wch:5},{wch:6},{wch:22},{wch:46},{wch:6},{wch:13},{wch:22},{wch:14},{wch:10}];
+    wsEx['!merges']=[{s:{r:0,c:0},e:{r:0,c:8}},{s:{r:1,c:0},e:{r:1,c:8}}];
 
     exLinks.forEach(lk=>{
       if(wsEx[lk.ref]) wsEx[lk.ref].l=lk.l;
