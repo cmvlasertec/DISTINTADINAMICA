@@ -691,8 +691,9 @@ async function downloadMain(){
     });
     expHRow.commit();
 
+    // Usa allRows per preservare TUTTE le righe nell'ordine ESATTO della distinta originale
     let expSumTot=0;
-    tableDataOrdered.forEach((d,i)=>{
+    allRows.forEach((d,i)=>{
       const row=wsE.getRow(2+i);
       row.getCell(1).value=i+1; row.getCell(1).alignment={horizontal:'center'};
       row.getCell(2).value=d.liv||'';
@@ -712,7 +713,7 @@ async function downloadMain(){
       row.commit();
     });
 
-    const expTRow=wsE.getRow(2+tableDataOrdered.length);
+    const expTRow=wsE.getRow(2+allRows.length);
     expTRow.getCell(3).value='TOTALE'; expTRow.getCell(3).font={bold:true,size:12};
     expTRow.getCell(6).value=expSumTot; expTRow.getCell(6).font={bold:true}; expTRow.getCell(6).alignment={horizontal:'center'};
     expTRow.commit();
@@ -721,7 +722,7 @@ async function downloadMain(){
     wsE.getColumn(5).width=6;wsE.getColumn(6).width=14;wsE.getColumn(7).width=22;wsE.getColumn(8).width=10;
 
     // AutoFilter su EXPORT CMV dalla riga 1
-    wsE.autoFilter={from:{row:1,column:1},to:{row:1+tableDataOrdered.length,column:8}};
+    wsE.autoFilter={from:{row:1,column:1},to:{row:1+allRows.length,column:8}};
 
     // ── STEP 3: Scrivi file ──
     const buffer=await workbook.xlsx.writeBuffer();
@@ -741,15 +742,16 @@ async function downloadMain(){
 
 // ─── EXPORT CMV COMPLETO ─────────────────────────────────
 function downloadExport(){
-  if(!tableData||!tableData.length){alert('Elabora prima la distinta');return;}
+  if(!allRows||!allRows.length){alert('Elabora prima la distinta');return;}
 
   const exWb=XLSX.utils.book_new();
 
   // Intestazione con info
-  // Usa tableDataOrdered per preservare l'ordine originale della distinta
+  // Usa allRows per preservare TUTTE le righe nell'ordine ESATTO della distinta originale
+  // (inclusi duplicati e tutti i livelli: 1, 2, 3, 4, 5...)
   const exData=[
     ['EXPORT CMV','','','','','','',''],
-    ['Codici univoci: '+tableDataOrdered.length,'','','','','','',''],
+    ['Righe totali: '+allRows.length,'','','','','','',''],
     ['','','','','','','',''],
     ['POS','LIV','CODICE','DESCRIZIONE','UM','QTÀ TOTALE','FORNITORE CMV','DISEGNO']
   ];
@@ -757,7 +759,7 @@ function downloadExport(){
   const exLinks=[];
   let sumTot=0;
 
-  tableDataOrdered.forEach((r,i)=>{
+  allRows.forEach((r,i)=>{
     const disegno=r.pdfUrl?'SI':'NO';
     exData.push([i+1, r.liv||'', r.code, r.desc, 'NR', r.qtyTot, r.forn||'', disegno]);
     sumTot+=r.qtyTot;
