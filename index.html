@@ -780,7 +780,7 @@ function downloadExport(){
   const exLinks=[];
 
   allRows.forEach((r,i)=>{
-    exData.push([r.liv||'', r.code, r.desc, 'NR', r.qtyTot, '', '', '']);
+    exData.push([r.liv||'', r.code, r.desc, 'NR', r.qtyTot, '01/07/2022', '31/12/9999', '']);
     // Hyperlink su colonna Codice Articolo (col B = index 1)
     if(r.pdfUrl){
       const ref=XLSX.utils.encode_cell({r:1+i,c:1});
@@ -851,7 +851,7 @@ async function downloadExportByLiv2(){
     const exLinks=[];
 
     g.rows.forEach((r,i)=>{
-      exData.push([r.liv||'', r.code, r.desc, 'NR', r.qtyTot, '', '', '']);
+      exData.push([r.liv||'', r.code, r.desc, 'NR', r.qtyTot, '01/07/2022', '31/12/9999', '']);
       if(r.pdfUrl){
         const ref=XLSX.utils.encode_cell({r:1+i,c:1});
         exLinks.push({ref,l:{Target:r.pdfUrl,Tooltip:'Apri PDF su Drive'}});
