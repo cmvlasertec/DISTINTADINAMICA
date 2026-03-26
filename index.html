@@ -695,42 +695,57 @@ async function downloadMain(){
     if(wsE) workbook.removeWorksheet(wsE.id);
     wsE=workbook.addWorksheet('EXPORT CMV');
 
-    // Header riga 1 — formato per import AdHoc gestionale
-    const expHdr=['Liv','Codice Articolo','Descrizione Articolo','UM In','Quantità Impiego','Data Iniz. Validità','Data Fine Validità','Tip Par'];
+    // Header riga 1
+    const expHdr=['POS','LIV','CODICE','DESCRIZIONE','UM','QTÀ TOTALE','FORNITORE CMV','PREZZO CMV','DISEGNO'];
+    const orangeCols=[6,7]; // indici 0-based delle colonne arancioni (FORNITORE CMV, PREZZO CMV)
     const expHRow=wsE.getRow(1);
     expHdr.forEach((h,i)=>{
       const c=expHRow.getCell(i+1);
       c.value=h;
       c.font={bold:true,color:{argb:'FFFFFFFF'},size:11};
-      c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1F3864'}};
+      c.fill={type:'pattern',pattern:'solid',fgColor:{argb:orangeCols.includes(i)?'FFC55A11':'FF1F3864'}};
       c.alignment={horizontal:'center',vertical:'middle'};
       c.border={bottom:{style:'thin',color:{argb:'FF000000'}}};
     });
     expHRow.commit();
 
     // Usa allRows per preservare TUTTE le righe nell'ordine ESATTO della distinta originale
+    let expSumTot=0;
     allRows.forEach((d,i)=>{
       const row=wsE.getRow(2+i);
-      row.getCell(1).value=d.liv||''; row.getCell(1).alignment={horizontal:'center'};
-      row.getCell(2).value=d.pdfUrl?{text:d.code,hyperlink:d.pdfUrl}:d.code;
-      row.getCell(2).font=d.pdfUrl?{color:{argb:'FF2E75B6'},underline:true}:{bold:true};
-      row.getCell(3).value=d.desc;
-      row.getCell(4).value='NR'; row.getCell(4).alignment={horizontal:'center'};
-      row.getCell(5).value=d.qtyTot; row.getCell(5).alignment={horizontal:'center'};
-      row.getCell(6).value=''; // Data Iniz. Validità — vuota per compilazione manuale
-      row.getCell(7).value=''; // Data Fine Validità — vuota per compilazione manuale
-      row.getCell(8).value=''; // Tip Par — vuota per compilazione manuale
+      row.getCell(1).value=i+1; row.getCell(1).alignment={horizontal:'center'};
+      row.getCell(2).value=d.liv||'';
+      row.getCell(3).value=d.pdfUrl?{text:d.code,hyperlink:d.pdfUrl}:d.code;
+      row.getCell(3).font=d.pdfUrl?{color:{argb:'FF2E75B6'},underline:true}:{bold:true};
+      row.getCell(4).value=d.desc;
+      row.getCell(5).value='NR'; row.getCell(5).alignment={horizontal:'center'};
+      row.getCell(6).value=d.qtyTot; row.getCell(6).alignment={horizontal:'center'};
+      // FORNITORE CMV → formula collegata al foglio 1 colonna M
+      row.getCell(7).value={formula:"IFERROR(INDEX('"+safeSheet+"'!M:M,MATCH(C"+(2+i)+",'"+safeSheet+"'!D:D,0)),\"\")"};
+      row.getCell(7).font={color:{argb:'FF0070C0'}};
+      // PREZZO CMV → formula collegata al foglio 1 colonna N
+      row.getCell(8).value={formula:"IFERROR(INDEX('"+safeSheet+"'!N:N,MATCH(C"+(2+i)+",'"+safeSheet+"'!D:D,0)),\"\")"};
+      row.getCell(8).font={color:{argb:'FF0070C0'}};
+      row.getCell(8).numFmt='€ #,##0.00';
+      // DISEGNO
+      row.getCell(9).value=d.pdfUrl?'SI':'NO'; row.getCell(9).alignment={horizontal:'center'};
+      expSumTot+=d.qtyTot;
       if(i%2===0){
-        for(let c=1;c<=8;c++) row.getCell(c).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEBF3FB'}};
+        for(let c=1;c<=9;c++) row.getCell(c).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEBF3FB'}};
       }
       row.commit();
     });
 
-    wsE.getColumn(1).width=6;wsE.getColumn(2).width=22;wsE.getColumn(3).width=46;wsE.getColumn(4).width=6;
-    wsE.getColumn(5).width=16;wsE.getColumn(6).width=18;wsE.getColumn(7).width=18;wsE.getColumn(8).width=8;
+    const expTRow=wsE.getRow(2+allRows.length);
+    expTRow.getCell(3).value='TOTALE'; expTRow.getCell(3).font={bold:true,size:12};
+    expTRow.getCell(6).value=expSumTot; expTRow.getCell(6).font={bold:true}; expTRow.getCell(6).alignment={horizontal:'center'};
+    expTRow.commit();
 
-    // AutoFilter su EXPORT CMV dalla riga 1 (8 colonne)
-    wsE.autoFilter={from:{row:1,column:1},to:{row:1+allRows.length,column:8}};
+    wsE.getColumn(1).width=6;wsE.getColumn(2).width=6;wsE.getColumn(3).width=22;wsE.getColumn(4).width=46;
+    wsE.getColumn(5).width=6;wsE.getColumn(6).width=14;wsE.getColumn(7).width=22;wsE.getColumn(8).width=14;wsE.getColumn(9).width=10;
+
+    // AutoFilter su EXPORT CMV dalla riga 1 (9 colonne)
+    wsE.autoFilter={from:{row:1,column:1},to:{row:1+allRows.length,column:9}};
 
     // ── STEP 3: Scrivi file ──
     const buffer=await workbook.xlsx.writeBuffer();
